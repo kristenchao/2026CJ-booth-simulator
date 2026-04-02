@@ -2,124 +2,126 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>GOFCN CJ2026 展台推演沙盘</title>
+<title>GOFCN CJ2026 展台推演沙盘 </title>
 <style>
     :root {
-        --bg-main: #f0f7fa; 
-        --bg-sidebar: #ffffff; 
-        --border-color: #bde0fe; 
-        --text-main: #2c3e50; 
-        --item-default: #4cc9f0; 
-        --grid-line: rgba(0, 180, 216, 0.15);
+        --bg-main: #f0f7fa;
+        --bg-sidebar: #ffffff;
+        --border-color: #bde0fe;
+        --text-main: #2c3e50;
+        --item-default: #4cc9f0;
+        --grid-line: rgba(0, 180, 216, 0.25);
     }
-
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-main); color: var(--text-main); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-    
-    #sidebar { width: 340px; background-color: var(--bg-sidebar); padding: 20px; box-shadow: 2px 0 15px rgba(0,0,0,0.05); overflow-y: auto; z-index: 10; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
+    #sidebar { width: 320px; background-color: var(--bg-sidebar); padding: 16px; box-shadow: 2px 0 15px rgba(0,0,0,0.05); overflow-y: auto; z-index: 10; display: flex; flex-direction: column; border-right: 1px solid var(--border-color); }
     #main { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+    h2, h3 { color: #03045e; margin-top: 0; font-size: 15px; border-left: 4px solid var(--item-default); padding-left: 10px; }
     
-    h2, h3 { color: #03045e; margin-top: 0; font-size: 16px; border-left: 4px solid var(--item-default); padding-left: 10px; }
-    
-    /* 仓库物资卡片 */
-    .warehouse-container { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-    .warehouse-item { background: #f8fbfd; padding: 10px; border-radius: 8px; cursor: grab; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 12px; transition: all 0.2s; user-select: none; position: relative; }
-    .warehouse-item:hover { border-color: var(--item-default); box-shadow: 0 2px 8px rgba(0,180,216,0.1); transform: translateY(-1px); }
+    .form-group { background: #f8fbfd; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 7px; margin-bottom: 15px;}
+    input, select { background: #fff; border: 1px solid #ced4da; color: var(--text-main); padding: 7px; border-radius: 4px; font-size: 12px; outline: none; transition: border 0.2s; }
+    input:focus, select:focus { border-color: #00b4d8; }
+    button { background: #00b4d8; color: #fff; border: none; padding: 7px 10px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: background 0.2s; font-size: 12px; }
+    button:hover { background: #0096c7; }
+
+    .warehouse-container { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .warehouse-item { background: #f8fbfd; padding: 8px 10px; border-radius: 8px; cursor: grab; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; transition: all 0.2s; user-select: none; position: relative; }
+    .warehouse-item:hover { border-color: var(--item-default); box-shadow: 0 2px 8px rgba(0,180,216,0.12); transform: translateY(-1px); }
     .warehouse-item:active { transform: scale(0.98); cursor: grabbing; }
     
-    .del-wh-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-size: 14px; cursor: pointer; opacity: 0.4; transition: all 0.2s; }
-    .del-wh-btn:hover { opacity: 1; transform: translateY(-50%) scale(1.2); }
+    .wh-actions { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); display: flex; gap: 6px; opacity: 0.35; transition: opacity 0.2s; }
+    .warehouse-item:hover .wh-actions { opacity: 1; }
+    .wh-action-btn { cursor: pointer; font-size: 14px; transition: transform 0.2s; display: inline-block; }
+    .wh-action-btn:hover { transform: scale(1.2); }
 
-    /* 迷你形状预览框 */
-    .preview-box { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; }
+    .preview-box { width: 52px; height: 36px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    
     .mini-shape { opacity: 0.9; }
     .mini-circle { width: 20px; height: 20px; border-radius: 50%; }
     .mini-square { width: 20px; height: 20px; }
-    .mini-rect { width: 24px; height: 8px; }
+    .mini-rect { width: 30px; height: 10px; }
     .mini-triangle { width: 22px; height: 19px; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
-    
-    .item-info { flex-grow: 1; display: flex; flex-direction: column; padding-right: 20px; }
-    .item-title { font-weight: bold; font-size: 13px; color: #023e8a; }
-    .item-meta { font-size: 11px; color: #6c757d; margin-top: 2px; }
 
-    /* 画布区域 */
-    #canvas-container { width: 760px; height: 520px; background-color: #ffffff; border: 2px solid var(--border-color); position: relative; background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px); background-size: 40px 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: 20px; overflow: visible; border-radius: 8px; }
+    .item-info { flex-grow: 1; display: flex; flex-direction: column; padding-right: 50px; }
+    .item-title { font-weight: bold; font-size: 12px; color: #023e8a; }
+    .item-meta  { font-size: 10px; color: #6c757d; margin-top: 1px; }
     
-    /* 场馆固有建筑 */
+    #canvas-container { width: 760px; height: 520px; background-color: #ffffff; border: 2px solid var(--border-color); position: relative; background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px); background-size: 40px 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: 10px; overflow: visible; border-radius: 8px; transition: background 0.3s; }
+    
     #screen { position: absolute; top: 0; left: 15%; width: 70%; height: 25px; background-color: #e9ecef; border-bottom: 2px solid var(--border-color); color: #495057; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; letter-spacing: 4px; z-index: 5; }
-    .aisle { position: absolute; width: 50px; height: 100px; border: 2px dashed #ffb703; color: #fb8500; display: flex; align-items: center; justify-content: center; font-weight: bold; writing-mode: vertical-lr; font-size: 12px; background: rgba(255, 183, 3, 0.05); }
+    .aisle { position: absolute; width: 50px; height: 100px; border: 2px dashed #ffb703; color: #fb8500; display: flex; align-items: center; justify-content: center; font-weight: bold; writing-mode: vertical-lr; font-size: 12px; background: rgba(255,183,3,0.1); }
     #aisle-l { left: -52px; top: 210px; border-right: none; }
     #aisle-r { right: -52px; top: 210px; border-left: none; }
-
-    /* 画布上的物体 */
-    .placed-item { position: absolute; border: 2px solid rgba(255,255,255,0.8); cursor: grab; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12px; font-weight: bold; color: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.15); transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); user-select: none; z-index: 10; transform-origin: center center; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-    .placed-item:active { cursor: grabbing; z-index: 100; box-shadow: 0 8px 15px rgba(0,0,0,0.25); }
     
-    .shape-circle { border-radius: 50%; }
-    .shape-triangle { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); border: none !important; border-radius: 0 !important; align-items: flex-end !important; padding-bottom: 8px; box-shadow: none; filter: drop-shadow(0 4px 5px rgba(0,0,0,0.2)); }
-    .shape-triangle span { font-size: 11px; white-space: nowrap; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-
-    /* 表单与保存面板 */
-    .form-group { background: #f8fbfd; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 8px; }
-    input, select { background: #ffffff; border: 1px solid #ced4da; color: var(--text-main); padding: 8px; border-radius: 4px; font-size: 13px; outline: none; transition: border 0.2s; }
-    input:focus, select:focus { border-color: #00b4d8; }
-    button { background: #00b4d8; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; font-weight: bold; cursor: pointer; transition: background 0.2s; }
-    button:hover { background: #0096c7; }
+    .placed-item { position: absolute; cursor: grab; display: flex; align-items: center; justify-content: center; text-align: center; user-select: none; z-index: 10; transform-origin: center center; transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    .placed-item:active { cursor: grabbing; z-index: 100; box-shadow: 0 8px 15px rgba(0,0,0,0.15); }
     
-    .save-panel { margin-top: auto; padding-top: 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--border-color); }
-    .save-panel select { flex: 1; min-width: 100px; }
+    .item-label { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: bold; color: #023e8a; white-space: nowrap; text-shadow: 0 0 4px #fff, 0 0 4px #fff; pointer-events: none; }
+    .shape-rect-item { border-radius: 5px; border: 2px solid rgba(255,255,255,0.8); font-size: 11px; font-weight: bold; color: #fff; box-shadow: 0 3px 8px rgba(0,0,0,0.15); text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+    .shape-tri-item { clip-path: polygon(50% 0%, 0% 100%, 100% 100%); font-size: 10px; font-weight: bold; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.8); display: flex; align-items: flex-end; justify-content: center; padding-bottom: 8px; filter: drop-shadow(0 3px 4px rgba(0,0,0,0.2)); }
+    
+    .save-panel { margin-top: auto; padding-top: 16px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; border-top: 1px solid var(--border-color); }
+    .save-panel select { flex: 1; min-width: 90px; }
     .btn-danger { background: #ef233c; }
     .btn-danger:hover { background: #d90429; }
-
-    #tooltip { position: fixed; background: rgba(255,255,255,0.95); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px; border-radius: 6px; font-size: 12px; pointer-events: none; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .occupancy-highlight { font-weight: bold; color: #00b4d8; font-size: 14px; background: #e0fbfc; padding: 2px 8px; border-radius: 12px; margin-top: 5px; display: inline-block; transition: all 0.3s; }
     
-    /* 面积提示高亮 */
-    .occupancy-highlight { font-weight: bold; color: #00b4d8; font-size: 14px; background: #e0fbfc; padding: 2px 8px; border-radius: 12px; margin-top: 5px; display: inline-block;}
+    #tooltip { position: fixed; background: rgba(255,255,255,0.95); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px; border-radius: 6px; font-size: 11px; pointer-events: none; display: none; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
 </style>
 </head>
 <body>
 
 <div id="sidebar">
+    <h3>🌁 场地背景</h3>
+    <div class="form-group">
+        <select id="bg-select" onchange="changeBg()">
+            <option value="snow">全白 (冰雪地貌)</option>
+            <option value="dirt">全棕 (化雪土地)</option>
+            <option value="snow-dirt">上白下棕 (双场景隔离)</option>
+            <option value="dirt-snow">上棕下白 (双场景隔离)</option>
+        </select>
+    </div>
+
     <h2>❄️ 物资仓库</h2>
     <div id="warehouse" class="warehouse-container"></div>
-
+    
     <h3>➕ 生产新物资</h3>
     <div class="form-group">
-        <input type="text" id="new-name" placeholder="物资名称 (如: VIP接待室)">
+        <input type="text" id="new-name" placeholder="物资名称 (如: 试玩区)">
         <select id="new-shape">
             <option value="Square">正方形 (1:1)</option>
             <option value="Rectangle">长方形 (1:3)</option>
             <option value="Circle">圆形</option>
             <option value="Triangle">等边三角形</option>
         </select>
-        <input type="number" id="new-area" placeholder="所需面积 (平米)">
+        <input type="number" id="new-area" placeholder="面积 (平米)">
         <button onclick="addToWarehouse()">生成并入库</button>
     </div>
-
+    
     <div class="save-panel">
         <select id="slot-select">
-            <option value="1">存档槽位 1</option>
-            <option value="2">存档槽位 2</option>
-            <option value="3">存档槽位 3</option>
+            <option value="1">存档 1</option>
+            <option value="2">存档 2</option>
+            <option value="3">存档 3</option>
         </select>
         <button onclick="saveLayout()">💾 保存</button>
-        <button onclick="loadLayout()" style="background: #4cc9f0; color:#03045e;">📂 读取</button>
-        <button class="btn-danger" onclick="clearCanvas()" style="width: 100%; margin-top: 5px;">🗑️ 清空画布</button>
+        <button onclick="loadLayout()" style="background:#4cc9f0;color:#03045e;">📂 读取</button>
+        <button class="btn-danger" onclick="clearCanvas()" style="width:100%;margin-top:4px;">🗑️ 清空画布</button>
     </div>
 </div>
 
 <div id="main">
-    <div style="position: relative;">
+    <div style="position:relative;">
         <div id="canvas-container">
             <div id="screen">主 舞 台 大 屏 幕</div>
             <div class="aisle" id="aisle-l">通道</div>
             <div class="aisle" id="aisle-r">通道</div>
         </div>
-        <div style="text-align: center; color: #023e8a; margin-top: 15px; font-weight: bold; font-size: 14px;">
+        <div style="text-align:center;color:#023e8a;margin-top:14px;font-weight:bold;font-size:14px;">
             19m × 13m 展位推演区 (1m = 40px)
             <br>
-            <div id="occupancy-display" class="occupancy-highlight">场地占用: 0㎡ / 247㎡ (0%)</div>
-            <div style="font-size: 12px; color: #e76f51; margin-top: 8px; font-weight: normal;">
-                💡 拖入物资 | 单击可旋转 | <b>将物资拖出画布外即可删除</b>
+            <div id="occupancy-display" class="occupancy-highlight">场地占用: 0㎡ / 247㎡ (0.0%)</div>
+            <div style="font-size:11px;color:#e76f51;margin-top:7px;font-weight:normal;">
+                💡 拖入物资 | 单击可旋转 | <b>拖出画布外即可删除</b>
             </div>
         </div>
     </div>
@@ -128,312 +130,628 @@
 <div id="tooltip"></div>
 
 <script>
-    const PX_PER_METER = 40;
-    const TOTAL_AREA = 247; // 19 * 13
-    const canvas = document.getElementById('canvas-container');
-    const warehouse = document.getElementById('warehouse');
-    const tooltip = document.getElementById('tooltip');
+const PX = 40, TOTAL_AREA = 247;
+const canvas = document.getElementById('canvas-container');
+const warehouse = document.getElementById('warehouse');
+const tooltip = document.getElementById('tooltip'); // 绑定 tooltip
+let canvasItems = [], itemCounter = 0;
+let draggedItemData = null;
 
-    let draggedItemData = null;
-    let canvasItems = []; 
+function changeBg() {
+    const val = document.getElementById('bg-select').value;
+    const gridLines = `linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px)`;
+    const snowCol = '#ffffff';
+    const dirtCol = '#e6dbc9';
 
-    // 更新帐篷面积至 12 平方米
-    const defaultItems = [
-        { name: "熔炉", shape: "Circle", area: 9, color: "#ff9f1c", isCustom: false },
-        { name: "生命树", shape: "Circle", area: 11, color: "#2a9d8f", isCustom: false },
-        { name: "雪坑", shape: "Rectangle", area: 12, color: "#00b4d8", isCustom: false },
-        { name: "探险者帐篷", shape: "Triangle", area: 12, color: "#e9c46a", isCustom: false },
-        { name: "大白熊雕像", shape: "Square", area: 5, color: "#cbd5e1", isCustom: false },
-        { name: "泰坦巨鸟", shape: "Square", area: 5, color: "#495057", isCustom: false }
-    ];
-
-    function initWarehouse() {
-        defaultItems.forEach(item => createWarehouseEl(item));
-        updateOccupancy(); // 初始化面积
+    if (val === 'snow') {
+        canvas.style.backgroundImage = gridLines;
+        canvas.style.backgroundColor = snowCol;
+        canvas.style.backgroundSize = '40px 40px'; 
+    } else if (val === 'dirt') {
+        canvas.style.backgroundImage = gridLines;
+        canvas.style.backgroundColor = dirtCol;
+        canvas.style.backgroundSize = '40px 40px'; 
+    } else if (val === 'snow-dirt') {
+        canvas.style.backgroundImage = `${gridLines}, linear-gradient(to bottom, ${snowCol} 50%, ${dirtCol} 50%)`;
+        canvas.style.backgroundColor = 'transparent';
+        canvas.style.backgroundSize = '40px 40px, 40px 40px, 100% 100%'; 
+    } else if (val === 'dirt-snow') {
+        canvas.style.backgroundImage = `${gridLines}, linear-gradient(to bottom, ${dirtCol} 50%, ${snowCol} 50%)`;
+        canvas.style.backgroundColor = 'transparent';
+        canvas.style.backgroundSize = '40px 40px, 40px 40px, 100% 100%'; 
     }
+}
 
-    // 更新面积显示函数
-    function updateOccupancy() {
-        let usedArea = 0;
-        canvasItems.forEach(item => {
-            usedArea += parseFloat(item.data.area);
+function mk(w,h){ const c=document.createElement('canvas'); c.width=Math.ceil(w); c.height=Math.ceil(h); return c; }
+
+function drawFurnace(w, h) {
+    const c = mk(w, h); const ctx = c.getContext('2d');
+    const cx = w/2, cy = h/2, r = Math.min(w,h)/2;
+    ctx.beginPath(); ctx.arc(cx,cy,r-1,0,Math.PI*2); ctx.fillStyle='#e8eaf0'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,r*.92,0,Math.PI*2); ctx.fillStyle='#93938b'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,r*.80,0,Math.PI*2); ctx.fillStyle='#d5d4d4'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,r*.68,0,Math.PI*2); ctx.fillStyle='#72726d'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,r*.46,0,Math.PI*2); ctx.fillStyle='#c8c4b8'; ctx.fill();
+    for(let i=0;i<8;i++){
+        const a=(i/8)*Math.PI*2-Math.PI/8;
+        const tx=cx+Math.cos(a)*r*.80, ty=cy+Math.sin(a)*r*.80;
+        ctx.beginPath(); ctx.arc(tx,ty,r*.09,0,Math.PI*2); ctx.fillStyle='#4a4a44'; ctx.fill();
+        ctx.beginPath(); ctx.arc(tx,ty,r*.06,0,Math.PI*2); ctx.fillStyle='#6e6e66'; ctx.fill();
+    }
+    for(let i=0;i<4;i++){
+        ctx.save(); ctx.translate(cx,cy); ctx.rotate(i/4*Math.PI*2);
+        ctx.fillStyle='#b5a890'; ctx.fillRect(-r*.06,-r*.46,r*.12,r*.36); ctx.restore();
+    }
+    ctx.beginPath(); ctx.arc(cx,cy,r*.28,0,Math.PI*2); ctx.fillStyle='#e16459'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,r*.20,0,Math.PI*2); ctx.fillStyle='#f0a050'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,r*.12,0,Math.PI*2); ctx.fillStyle='#f5d060'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,r*.06,0,Math.PI*2); ctx.fillStyle='#fff8e0'; ctx.fill();
+    ctx.strokeStyle='#36312b'; ctx.lineWidth=1;
+    [.92,.80,.68].forEach(rr=>{ctx.beginPath();ctx.arc(cx,cy,r*rr,0,Math.PI*2);ctx.stroke();});
+    return c;
+}
+
+function drawLifeTree(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    const cx=w/2, cy=h/2, r=Math.min(w,h)/2;
+    ctx.beginPath(); ctx.arc(cx,cy,r-1,0,Math.PI*2); ctx.fillStyle='#9d9aa0'; ctx.fill();
+    ctx.beginPath(); ctx.arc(cx,cy,r*.84,0,Math.PI*2); ctx.fillStyle='#797074'; ctx.fill();
+    for(let i=0;i<16;i++){
+        const a=i/16*Math.PI*2, fx=cx+Math.cos(a)*r*.80, fy=cy+Math.sin(a)*r*.80;
+        ctx.beginPath(); ctx.arc(fx,fy,r*.04,0,Math.PI*2);
+        ctx.fillStyle=i%2===0?'#7a5c3a':'#9a7a50'; ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(cx,cy,r*.62,0,Math.PI*2); ctx.fillStyle='#4f5e52'; ctx.fill();
+    for(let i=0;i<4;i++){
+        ctx.save(); ctx.translate(cx,cy); ctx.rotate(i/4*Math.PI*2);
+        ctx.fillStyle='#6b7a6e'; ctx.fillRect(r*.50,-r*.06,r*.14,r*.12); ctx.restore();
+    }
+    for(let i=0;i<6;i++){
+        const a=i/6*Math.PI*2;
+        ctx.beginPath(); ctx.ellipse(cx+Math.cos(a)*r*.20,cy+Math.sin(a)*r*.20,r*.22,r*.12,a,0,Math.PI*2);
+        ctx.fillStyle='#313737'; ctx.fill();
+    }
+    ctx.beginPath(); ctx.arc(cx,cy,r*.18,0,Math.PI*2); ctx.fillStyle='#5a4030'; ctx.fill();
+    [[0,-0.08,.42,'#649169'],[-0.12,0.06,.32,'#4f5e52'],[0.12,0.04,.34,'#5a7060']].forEach(([ox,oy,rr,col])=>{
+        ctx.beginPath(); ctx.arc(cx+ox*r,cy+oy*r,rr*r,0,Math.PI*2); ctx.fillStyle=col; ctx.fill();
+    });
+    ctx.beginPath(); ctx.arc(cx-r*.05,cy-r*.18,r*.12,0,Math.PI*2); ctx.fillStyle='#80b880'; ctx.fill();
+    return c;
+}
+
+function drawPolarBear(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    const cx=w/2, cy=h/2, r=Math.min(w,h)/2;
+    ctx.beginPath(); ctx.ellipse(cx,cy+r*.12,r*.72,r*.22,0,0,Math.PI*2); ctx.fillStyle='rgba(60,80,120,0.22)'; ctx.fill();
+    const pedR=r*.42;
+    ctx.beginPath();
+    for(let i=0;i<8;i++){
+        const a=i/8*Math.PI*2-Math.PI/8;
+        if(i===0) ctx.moveTo(cx+Math.cos(a)*pedR,cy+r*.18+Math.sin(a)*pedR*.4);
+        else ctx.lineTo(cx+Math.cos(a)*pedR,cy+r*.18+Math.sin(a)*pedR*.4);
+    }
+    ctx.closePath(); ctx.fillStyle='#9f9b93'; ctx.fill(); ctx.strokeStyle='#6a6660'; ctx.lineWidth=1; ctx.stroke();
+    ctx.beginPath();
+    for(let i=0;i<8;i++){
+        const a=i/8*Math.PI*2-Math.PI/8;
+        if(i===0) ctx.moveTo(cx+Math.cos(a)*pedR*1.0,cy+r*.10+Math.sin(a)*pedR*.38);
+        else ctx.lineTo(cx+Math.cos(a)*pedR*1.0,cy+r*.10+Math.sin(a)*pedR*.38);
+    }
+    ctx.closePath(); ctx.fillStyle='#b5b1a8'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx,cy+r*.04,r*.38,r*.34,0,0,Math.PI*2); ctx.fillStyle='#e8e8e8'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx,cy-r*.14,r*.34,r*.28,0,0,Math.PI*2); ctx.fillStyle='#f0f0f0'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx-r*.38,cy-r*.04,r*.14,r*.22,-.3,0,Math.PI*2); ctx.fillStyle='#e4e4e4'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+r*.38,cy-r*.04,r*.14,r*.22,.3,0,Math.PI*2); ctx.fillStyle='#e4e4e4'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx,cy-r*.42,r*.26,r*.24,0,0,Math.PI*2); ctx.fillStyle='#f2f2f2'; ctx.fill();
+    [[-0.18,-0.62],[0.18,-0.62]].forEach(([ox,oy])=>{
+        ctx.beginPath(); ctx.ellipse(cx+ox*r,cy+oy*r,r*.08,r*.08,0,0,Math.PI*2); ctx.fillStyle='#e0e0e0'; ctx.fill();
+    });
+    ctx.beginPath(); ctx.ellipse(cx,cy-r*.38,r*.12,r*.09,0,0,Math.PI*2); ctx.fillStyle='#d8d8d8'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx,cy-r*.43,r*.05,r*.038,0,0,Math.PI*2); ctx.fillStyle='#1a1a1a'; ctx.fill();
+    [[-0.10,-0.50],[0.10,-0.50]].forEach(([ox,oy])=>{
+        ctx.beginPath(); ctx.arc(cx+ox*r,cy+oy*r,r*.028,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill();
+        ctx.beginPath(); ctx.arc(cx+ox*r-r*.008,cy+oy*r-r*.01,r*.010,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    });
+    
+    const scarfY=cy-r*.22;
+    ctx.beginPath(); ctx.ellipse(cx,scarfY,r*.30,r*.10,0,0,Math.PI*2); ctx.fillStyle='#1a6fc4'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx,scarfY,r*.30,r*.10,0,0,Math.PI*2); ctx.strokeStyle='#0d4f96'; ctx.lineWidth=1; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-r*.10,scarfY+r*.06);
+    ctx.quadraticCurveTo(cx-r*.28,scarfY+r*.22,cx-r*.22,scarfY+r*.38);
+    ctx.quadraticCurveTo(cx-r*.15,scarfY+r*.50,cx-r*.05,scarfY+r*.44);
+    ctx.quadraticCurveTo(cx+r*.02,scarfY+r*.28,cx+r*.08,scarfY+r*.08);
+    ctx.closePath(); ctx.fillStyle='#1a6fc4'; ctx.fill(); ctx.strokeStyle='#0d4f96'; ctx.lineWidth=.8; ctx.stroke();
+    
+    const sfX=cx-r*.12, sfY=scarfY+r*.36, sfR=r*.07;
+    for(let i=0;i<6;i++){
+        const a=i/6*Math.PI*2;
+        ctx.beginPath(); ctx.moveTo(sfX,sfY); ctx.lineTo(sfX+Math.cos(a)*sfR,sfY+Math.sin(a)*sfR);
+        ctx.strokeStyle='#ffffff'; ctx.lineWidth=1.2; ctx.stroke();
+    }
+    ctx.strokeStyle='rgba(180,180,180,0.4)'; ctx.lineWidth=.6;
+    [[-.18,-.04],[.18,-.04],[0,.12],[-.08,-.18],[.08,-.18]].forEach(([ox,oy])=>{
+        ctx.beginPath(); ctx.moveTo(cx+ox*r-r*.03,cy+oy*r); ctx.lineTo(cx+ox*r+r*.03,cy+oy*r+r*.03); ctx.stroke();
+    });
+    return c;
+}
+
+function drawTitanBird(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    const cx=w/2, cy=h/2, r=Math.min(w,h)/2;
+    ctx.beginPath(); ctx.ellipse(cx,cy+r*.1,r*.75,r*.28,0,0,Math.PI*2); ctx.fillStyle='rgba(40,50,80,0.25)'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx,cy+r*.18,r*.38,r*.14,0,0,Math.PI*2); ctx.fillStyle='#2e4773'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx,cy+r*.12,r*.32,r*.10,0,0,Math.PI*2); ctx.fillStyle='#436298'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx,cy-r*.04,r*.38,r*.48,0,0,Math.PI*2); ctx.fillStyle='#6a92d1'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx-r*.42,cy+r*.04,r*.28,r*.14,-0.4,0,Math.PI*2); ctx.fillStyle='#5278b8'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+r*.42,cy+r*.04,r*.28,r*.14,0.4,0,Math.PI*2); ctx.fillStyle='#5278b8'; ctx.fill();
+    for(let i=0;i<3;i++){
+        ctx.beginPath(); ctx.moveTo(cx-r*.20-i*r*.08,cy-r*.06+i*r*.04); ctx.lineTo(cx-r*.58,cy+i*r*.06);
+        ctx.strokeStyle='#3c5fa0'; ctx.lineWidth=1; ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(cx+r*.20+i*r*.08,cy-r*.06+i*r*.04); ctx.lineTo(cx+r*.58,cy+i*r*.06); ctx.stroke();
+    }
+    ctx.beginPath(); ctx.ellipse(cx,cy-r*.44,r*.22,r*.24,0,0,Math.PI*2); ctx.fillStyle='#dde8f8'; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx,cy-r*.22); ctx.lineTo(cx-r*.06,cy-r*.10); ctx.lineTo(cx+r*.06,cy-r*.10);
+    ctx.closePath(); ctx.fillStyle='#c88030'; ctx.fill();
+    [[-0.08,-0.50],[0.08,-0.50]].forEach(([ox,oy])=>{
+        ctx.beginPath(); ctx.arc(cx+ox*r,cy+oy*r,r*.04,0,Math.PI*2); ctx.fillStyle='#211d2c'; ctx.fill();
+        ctx.beginPath(); ctx.arc(cx+ox*r-r*.01,cy+oy*r-r*.01,r*.015,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+    });
+    return c;
+}
+
+function drawArcherBarracks(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.fillStyle='#c6b396'; ctx.roundRect(0,0,w,h,5); ctx.fill();
+    ctx.strokeStyle='#3a281b'; ctx.lineWidth=2.5; ctx.strokeRect(1.5,1.5,w-3,h-3);
+    const pad=h*.14; ctx.fillStyle='#d4c4a0'; ctx.fillRect(pad,pad,w-pad*2,h-pad*2);
+    
+    const tW=w*.30, tH=h*.82, tX=pad, tY=h*.09;
+    ctx.fillStyle='#c7a94c'; ctx.beginPath(); ctx.roundRect(tX,tY,tW,tH,4); ctx.fill();
+    ctx.strokeStyle='#9c7a20'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(tX+tW/2,tY+3); ctx.lineTo(tX+tW/2,tY+tH-3); ctx.stroke();
+    ctx.fillStyle='#9c846d'; ctx.fillRect(tX,tY+tH*.55,tW,tH*.45);
+    ctx.strokeStyle='#3a281b'; ctx.lineWidth=1; ctx.strokeRect(tX,tY+tH*.55,tW,tH*.45);
+    
+    const tgR = h * 0.14;
+    const startX = tX + tW + pad * 2;
+    const spacing = (w - startX - pad * 2) / 3;
+    for(let i=0; i<3; i++) {
+        const tgX = startX + i*spacing + spacing/2;
+        const tgY = h * 0.3;
+        ctx.strokeStyle='#5a4030'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(tgX, tgY+tgR); ctx.lineTo(tgX, tgY+tgR+h*.25); ctx.stroke();
+        [['#c0c0c0',tgR],['#e8e8e8',tgR*.72],['#c8342a',tgR*.44],['#fff',tgR*.18]].forEach(([col,r])=>{
+            ctx.beginPath(); ctx.ellipse(tgX,tgY,r,r*.55,0,0,Math.PI*2);
+            ctx.fillStyle=col; ctx.fill(); ctx.strokeStyle='#3a281b'; ctx.lineWidth=.5; ctx.stroke();
         });
-        const percentage = ((usedArea / TOTAL_AREA) * 100).toFixed(1);
-        const display = document.getElementById('occupancy-display');
-        display.innerText = `场地占用: ${usedArea}㎡ / ${TOTAL_AREA}㎡ (${percentage}%)`;
-        
-        // 拥挤提示颜色
-        if (percentage > 70) {
-            display.style.color = "#d90429";
-            display.style.background = "#fff0f3";
-        } else if (percentage > 50) {
-            display.style.color = "#fb8500";
-            display.style.background = "#fff8ec";
-        } else {
-            display.style.color = "#00b4d8";
-            display.style.background = "#e0fbfc";
+    }
+    
+    [[0,0],[w,0],[0,h],[w,h]].forEach(([px,py])=>{
+        const ox=px===0?pad*.4:-(pad*.4), oy=py===0?pad*.4:-(pad*.4);
+        ctx.fillStyle='#353e55'; ctx.beginPath(); ctx.roundRect(px+ox-h*.06,py+oy-h*.06,h*.12,h*.12,2); ctx.fill();
+        ctx.strokeStyle='#1a2030'; ctx.lineWidth=.8; ctx.stroke();
+    });
+    return c;
+}
+
+function drawLumberCamp(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.fillStyle='#8a6a5a'; ctx.beginPath(); ctx.roundRect(0,0,w,h,5); ctx.fill();
+    const pad=w*.08; ctx.fillStyle='#6a4a3a'; ctx.fillRect(pad,pad,w-pad*2,h-pad*2);
+    
+    [[pad,pad],[w-pad,pad],[pad,h-pad],[w-pad,h-pad]].forEach(([px,py])=>{
+        const s=w*.10; ctx.fillStyle='#5a423b'; ctx.fillRect(px-s/2,py-s/2,s,s);
+        ctx.fillStyle='#ab8f7e'; ctx.fillRect(px-s/2+1,py-s/2+1,s-2,s-2);
+        ctx.fillStyle='#cbc7c6'; ctx.beginPath(); ctx.arc(px,py,s*.25,0,Math.PI*2); ctx.fill();
+    });
+    
+    const logRows = 3, logCols = 4;
+    const lW = (w - pad*3.5) / logCols, lH = (h - pad*3.8) / logRows;
+    const startX = pad*1.5, startY = pad*1.5;
+    for(let row=0; row<logRows; row++){
+        for(let col=0; col<logCols; col++){
+            const lx = startX + col*(lW+1), ly = startY + row*(lH+1);
+            ctx.fillStyle = row%2===0 ? '#846658' : '#5a423b';
+            ctx.beginPath(); ctx.roundRect(lx,ly,lW,lH,lH*.25); ctx.fill();
+            ctx.strokeStyle='rgba(58,38,35,0.5)'; ctx.lineWidth=.6;
+            ctx.beginPath(); ctx.ellipse(lx+lW/2,ly+lH/2,lW*.25,lH*.25,0,0,Math.PI*2); ctx.stroke();
+            ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=.5;
+            ctx.beginPath(); ctx.moveTo(lx+lW*.15,ly+lH*.3); ctx.lineTo(lx+lW*.85,ly+lH*.7); ctx.stroke();
         }
     }
+    const stX=w/2, stY=h-pad*1.4, stR=w*.09;
+    ctx.beginPath(); ctx.arc(stX,stY,stR,0,Math.PI*2); ctx.fillStyle='#c8a080'; ctx.fill();
+    ctx.strokeStyle='#6a4030'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(stX,stY,stR*.65,0,Math.PI*2); ctx.stroke();
+    ctx.fillStyle='#aaaaaa';
+    ctx.beginPath(); ctx.moveTo(stX+stR*.4,stY-stR*.6); ctx.lineTo(stX+stR*.9,stY-stR*.2);
+    ctx.lineTo(stX+stR*.7,stY+stR*.2); ctx.lineTo(stX+stR*.2,stY-stR*.1); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#382623'; ctx.lineWidth=2; ctx.strokeRect(1.5,1.5,w-3,h-3);
+    return c;
+}
 
-    function getMiniShapeClass(shape) {
-        if (shape === 'Circle') return 'mini-circle';
-        if (shape === 'Rectangle') return 'mini-rect';
-        if (shape === 'Triangle') return 'mini-triangle';
-        return 'mini-square';
-    }
+function drawSnowCedar(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.fillStyle='#edf5f8'; ctx.roundRect(0,0,w,h,5); ctx.fill();
+    ctx.strokeStyle='#bde0fe'; ctx.lineWidth=2; ctx.strokeRect(1,1,w-2,h-2);
 
-    function createWarehouseEl(data) {
-        const div = document.createElement('div');
-        div.className = 'warehouse-item';
-        div.draggable = true;
-        
-        let shapeText = data.shape === 'Square' ? '1:1' : data.shape === 'Rectangle' ? '1:3' : data.shape === 'Circle' ? '圆形' : '等边三角';
-        let miniClass = getMiniShapeClass(data.shape);
-        let itemColor = data.color || 'var(--item-default)'; 
-
-        let innerHTML = `
-            <div class="preview-box">
-                <div class="mini-shape ${miniClass}"></div>
-            </div>
-            <div class="item-info">
-                <div class="item-title">${data.name}</div>
-                <div class="item-meta">${data.area}㎡ | ${shapeText}</div>
-            </div>
-        `;
-
-        if (data.isCustom) {
-            innerHTML += `<div class="del-wh-btn" title="删除该物资">🗑️</div>`;
+    function drawJaggedCircle(cx, cy, r, color) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        const points = 10;
+        for(let i=0; i<points; i++) {
+            const a = (i/points) * Math.PI * 2;
+            const rad = (i%2===0) ? r : r*0.75;
+            ctx.lineTo(cx + Math.cos(a)*rad, cy + Math.sin(a)*rad);
         }
-
-        div.innerHTML = innerHTML;
-        
-        const previewShape = div.querySelector('.mini-shape');
-        previewShape.style.backgroundColor = itemColor;
-
-        if (data.isCustom) {
-            const delBtn = div.querySelector('.del-wh-btn');
-            delBtn.onmousedown = (e) => e.stopPropagation();
-            delBtn.onclick = (e) => {
-                e.stopPropagation();
-                div.remove();
-            };
-        }
-
-        div.ondragstart = (e) => { 
-            draggedItemData = { ...data, color: itemColor }; 
-            e.dataTransfer.setData('text/plain', ''); 
-        };
-        warehouse.appendChild(div);
+        ctx.closePath();
+        ctx.fill();
     }
 
-    function addToWarehouse() {
-        const nameInput = document.getElementById('new-name');
-        const shapeSelect = document.getElementById('new-shape');
-        const areaInput = document.getElementById('new-area');
-        
-        const name = nameInput.value.trim();
-        const shape = shapeSelect.value;
-        const area = parseFloat(areaInput.value);
-        
-        if (!name) return alert("请填写物资名称！");
-        if (!area || area <= 0) return alert("请填写正确的面积！");
-        
-        const data = { name, shape, area, color: 'var(--item-default)', isCustom: true };
-        createWarehouseEl(data);
-        
-        nameInput.value = '';
-        areaInput.value = '';
-    }
-
-    canvas.ondragover = (e) => e.preventDefault();
-    canvas.ondrop = (e) => {
-        e.preventDefault();
-        if (!draggedItemData) return;
-        
-        const rect = canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        spawnItem(draggedItemData, x, y, 0);
-        draggedItemData = null;
+    const drawTree = (cx, cy, r) => {
+        ctx.fillStyle='rgba(100,130,160,0.15)';
+        ctx.beginPath(); ctx.ellipse(cx, cy+r*.3, r*.8, r*.4, 0,0,Math.PI*2); ctx.fill();
+        drawJaggedCircle(cx, cy, r, '#6b8ea6');
+        drawJaggedCircle(cx, cy, r*0.75, '#8caecc');
+        drawJaggedCircle(cx, cy, r*0.45, '#e4f0f8'); 
     };
 
-    function spawnItem(data, x, y, rotation = 0) {
-        const dims = calcDims(data.shape, data.area);
-        const el = document.createElement('div');
-        const itemId = 'item_' + Date.now() + Math.random();
-        
-        el.className = 'placed-item';
-        el.id = itemId;
-        
-        let currentRotation = rotation;
-        el.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
-        
-        if (data.shape === 'Triangle') {
-            el.classList.add('shape-triangle');
-            el.style.width = dims.w + 'px';
-            el.style.height = dims.h + 'px';
-            el.style.backgroundColor = data.color;
-            el.innerHTML = `<span>${data.name}</span>`;
-        } else {
-            if (data.shape === 'Circle') el.classList.add('shape-circle');
-            el.style.width = dims.w + 'px';
-            el.style.height = dims.h + 'px';
-            el.style.backgroundColor = data.color;
-            el.innerHTML = data.name;
-        }
+    drawTree(w*0.15, h*0.4, h*0.3);
+    drawTree(w*0.35, h*0.6, h*0.25);
+    drawTree(w*0.5,  h*0.35, h*0.3);
+    drawTree(w*0.7,  h*0.65, h*0.28);
+    drawTree(w*0.85, h*0.4, h*0.32);
+    return c;
+}
 
-        el.style.left = x + 'px';
-        el.style.top = y + 'px';
+function drawBBQStall(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.fillStyle='#cde0ed'; ctx.beginPath(); ctx.roundRect(0,0,w,h,5); ctx.fill();
+    ctx.strokeStyle='#a6c2d6'; ctx.lineWidth=2; ctx.strokeRect(1,1,w-2,h-2);
 
-        el.onclick = (e) => {
-            if (el.dataset.wasDragged === 'true') {
-                el.dataset.wasDragged = 'false';
-                return;
+    ctx.fillStyle='#7e5c4d'; ctx.fillRect(w*0.65, h*0.35, w*0.25, h*0.2);
+    ctx.fillStyle='#c74a26'; ctx.fillRect(w*0.68, h*0.38, w*0.19, h*0.14); 
+
+    ctx.fillStyle='#3c3431'; ctx.beginPath(); ctx.arc(w*0.45, h*0.45, w*0.15, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e86c15'; ctx.beginPath(); ctx.arc(w*0.45, h*0.45, w*0.10, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f9c834'; ctx.beginPath(); ctx.arc(w*0.45, h*0.45, w*0.06, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle='#749a7c';
+    ctx.beginPath();
+    ctx.moveTo(w*0.1, h*0.6);   
+    ctx.lineTo(w*0.3, h*0.6);
+    ctx.lineTo(w*0.45, h*0.3);  
+    ctx.lineTo(w*0.8, h*0.3);   
+    ctx.lineTo(w*0.8, h*0.1);
+    ctx.lineTo(w*0.1, h*0.1);   
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath(); ctx.ellipse(w*0.2, h*0.15, w*0.08, h*0.04, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(w*0.6, h*0.15, w*0.1, h*0.03, 0, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle='#5c6065'; ctx.beginPath(); ctx.arc(w*0.45, h*0.18, w*0.06, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#2b2d30'; ctx.beginPath(); ctx.arc(w*0.45, h*0.18, w*0.04, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle='#594136'; ctx.fillRect(w*0.15, h*0.35, w*0.12, h*0.2);
+
+    const tbX = w*0.5, tbY = h*0.75;
+    ctx.fillStyle='#856752'; ctx.beginPath(); ctx.arc(tbX, tbY, w*0.12, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#4a3629'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(tbX-w*0.08, tbY-h*0.04); ctx.lineTo(tbX+w*0.08, tbY-h*0.04); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tbX-w*0.1, tbY+h*0.03); ctx.lineTo(tbX+w*0.1, tbY+h*0.03); ctx.stroke();
+
+    const stR = w*0.04;
+    const drawStool = (sx, sy) => {
+        ctx.fillStyle='#b8c7c4'; ctx.beginPath(); ctx.arc(sx, sy, stR, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle='#7a8685'; ctx.lineWidth=1; ctx.stroke();
+    }
+    drawStool(tbX-w*0.18, tbY);
+    drawStool(tbX+w*0.18, tbY+h*0.02);
+    drawStool(tbX-w*0.05, tbY+h*0.15);
+
+    return c;
+}
+
+function drawIceBlock(w, h) {
+    const c = mk(w, h); const ctx = c.getContext('2d');
+    ctx.fillStyle = '#a0d8ef';
+    ctx.beginPath(); ctx.roundRect(0, 0, w, h, 2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.lineWidth = 1.5; ctx.strokeRect(1, 1, w-2, h-2);
+    ctx.fillStyle = '#7ab8d4';
+    ctx.beginPath(); ctx.ellipse(w/2, h/2, w*0.25, h*0.3, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#e0f7fa'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.beginPath(); ctx.arc(w*0.2, h*0.2, w*0.06, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(w*0.8, h*0.8, w*0.04, 0, Math.PI*2); ctx.fill();
+    return c;
+}
+
+// ==================================================
+//  主逻辑 
+// ==================================================
+const defaultItems = [
+    { name: "熔炉", shape: "Circle", area: 9, color: "#ff9f1c", isCustom: false, renderFn:(w,h)=>drawFurnace(w,h) },
+    { name: "生命树", shape: "Circle", area: 11, color: "#2a9d8f", isCustom: false, renderFn:(w,h)=>drawLifeTree(w,h) },
+    { name: "弓兵训练营", shape: "Rectangle", area: 12, color: "#c7a94c", isCustom: false, renderFn:(w,h)=>drawArcherBarracks(w,h) },
+    { name: "木材营地", shape: "Square", area: 8, color: "#846658", isCustom: false, renderFn:(w,h)=>drawLumberCamp(w,h) },
+    { name: "烤肉摊位", shape: "Square", area: 15, color: "#e86c15", isCustom: false, renderFn:(w,h)=>drawBBQStall(w,h) },
+    { name: "雪松树林", shape: "Rectangle", area: 5, color: "#9cb1c2", isCustom: false, renderFn:(w,h)=>drawSnowCedar(w,h) },
+    { name: "大白熊雕像", shape: "Square", area: 5, color: "#cbd5e1", isCustom: false, renderFn:(w,h)=>drawPolarBear(w,h) },
+    { name: "泰坦巨鸟", shape: "Square", area: 5, color: "#495057", isCustom: false, renderFn:(w,h)=>drawTitanBird(w,h) },
+    { name: "冰封打卡框", shape: "Square", area: 1, color: "#a0d8ef", isCustom: false, renderFn:(w,h)=>drawIceBlock(w,h) }
+];
+
+function initWarehouse() {
+    defaultItems.forEach(item => createWarehouseEl(item));
+    updateOccupancy(); 
+}
+
+function getMiniShapeClass(shape) {
+    if (shape === 'Circle') return 'mini-circle';
+    if (shape === 'Rectangle') return 'mini-rect';
+    if (shape === 'Triangle') return 'mini-triangle';
+    return 'mini-square';
+}
+
+function createWarehouseEl(data) {
+    const div = document.createElement('div');
+    div.className = 'warehouse-item';
+    div.draggable = true;
+    
+    let shapeText = data.shape === 'Square' ? '1:1' : data.shape === 'Rectangle' ? '1:3' : data.shape === 'Circle' ? '圆形' : '等边三角';
+    let itemColor = data.color || 'var(--item-default)'; 
+
+    let innerHTML = `
+        <div class="preview-box"></div>
+        <div class="item-info">
+            <div class="item-title">${data.name}</div>
+            <div class="item-meta"><span>${data.area}</span>㎡ | ${shapeText}</div>
+        </div>
+        <div class="wh-actions">
+            <span class="wh-action-btn edit-wh-btn" title="修改面积">✏️</span>
+            ${data.isCustom ? `<span class="wh-action-btn del-wh-btn" title="删除物资">🗑️</span>` : ''}
+        </div>
+    `;
+    div.innerHTML = innerHTML;
+    
+    const pBox = div.querySelector('.preview-box');
+    if (data.renderFn) {
+        const pw = data.shape==='Rectangle' ? 42 : 28;
+        const ph = data.shape==='Rectangle' ? 14 : 28;
+        const pc = data.renderFn(pw, ph);
+        pc.style.width=pw+'px'; pc.style.height=ph+'px';
+        pc.style.borderRadius = data.shape==='Circle' ? '50%' : '3px';
+        pBox.appendChild(pc);
+    } else {
+        const shp = document.createElement('div');
+        shp.className = 'mini-shape ' + getMiniShapeClass(data.shape);
+        shp.style.backgroundColor = itemColor; 
+        pBox.appendChild(shp);
+    }
+
+    // 绑定编辑面积事件 (修复了自由缩放)
+    const editBtn = div.querySelector('.edit-wh-btn');
+    editBtn.onmousedown = (e) => e.stopPropagation();
+    editBtn.onclick = (e) => {
+        e.stopPropagation();
+        let newArea = window.prompt(`请输入【${data.name}】的新面积 (㎡):`, data.area);
+        if(newArea !== null) {
+            let val = parseFloat(newArea);
+            if(!isNaN(val) && val > 0) {
+                data.area = val;
+                div.querySelector('.item-meta span').innerText = val;
+            } else {
+                alert("请输入大于0的有效数字！");
             }
-            currentRotation = (currentRotation + 45) % 360;
-            el.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
-            updateItemState(itemId, { rotation: currentRotation });
+        }
+    };
+
+    if (data.isCustom) {
+        const delBtn = div.querySelector('.del-wh-btn');
+        delBtn.onmousedown = (e) => e.stopPropagation();
+        delBtn.onclick = (e) => { e.stopPropagation(); div.remove(); };
+    }
+
+    div.ondragstart = (e) => { 
+        draggedItemData = { ...data, color: itemColor }; 
+        e.dataTransfer.setData('text/plain', ''); 
+    };
+    warehouse.appendChild(div);
+}
+
+function addToWarehouse() {
+    const name = document.getElementById('new-name').value.trim();
+    const shape = document.getElementById('new-shape').value;
+    const area = parseFloat(document.getElementById('new-area').value);
+    if (!name) return alert("请填写物资名称！");
+    if (!area || area <= 0) return alert("请填写正确的面积！");
+    const data = { name, shape, area, color: 'var(--item-default)', isCustom: true, renderFn:null };
+    createWarehouseEl(data);
+    document.getElementById('new-name').value = '';
+    document.getElementById('new-area').value = '';
+}
+
+canvas.ondragover = (e) => e.preventDefault();
+canvas.ondrop = (e) => {
+    e.preventDefault();
+    if (!draggedItemData) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    spawnItem(draggedItemData, x, y, 0);
+    draggedItemData = null;
+};
+
+function spawnItem(data, x, y, rotation = 0) {
+    const dims = calcDims(data.shape, data.area);
+    const el = document.createElement('div');
+    const itemId = ++itemCounter;
+    
+    el.className = 'placed-item';
+    el.id = 'item_' + itemId;
+    
+    let currentRotation = rotation;
+    el.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
+    
+    if (data.renderFn) {
+        // 渲染函数自动适应新的 dims 高宽，实现等比例高清缩放！
+        const ac = data.renderFn(Math.ceil(dims.w), Math.ceil(dims.h));
+        ac.style.width=dims.w+'px'; ac.style.height=dims.h+'px';
+        ac.style.borderRadius = data.shape==='Circle'?'50%':'6px';
+        ac.style.display='block'; ac.style.pointerEvents='none';
+        ac.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)';
+        el.appendChild(ac);
+        const lbl=document.createElement('div');
+        lbl.className='item-label'; lbl.textContent=data.name;
+        el.appendChild(lbl);
+    } else if (data.shape === 'Triangle') {
+        el.classList.add('shape-tri-item');
+        el.style.width = dims.w + 'px';
+        el.style.height = dims.h + 'px';
+        el.style.backgroundColor = data.color;
+        el.innerHTML = `<span>${data.name}</span>`;
+    } else {
+        el.classList.add('shape-rect-item');
+        if (data.shape === 'Circle') el.style.borderRadius = '50%';
+        el.style.width = dims.w + 'px';
+        el.style.height = dims.h + 'px';
+        el.style.backgroundColor = data.color;
+        el.innerHTML = data.name;
+    }
+
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+
+    el.onclick = (e) => {
+        if (el.dataset.wasDragged === 'true') { el.dataset.wasDragged = 'false'; return; }
+        currentRotation = (currentRotation + 45) % 360;
+        el.style.transform = `translate(-50%, -50%) rotate(${currentRotation}deg)`;
+        updateItemState(itemId, { rotation: currentRotation });
+    };
+
+    let isDragging = false;
+    let startX, startY;
+
+    el.onmousedown = (e) => {
+        if (e.button !== 0) return;
+        isDragging = false; el.dataset.wasDragged = 'false';
+        startX = e.clientX; startY = e.clientY;
+        const currentLeft = parseFloat(el.style.left);
+        const currentTop = parseFloat(el.style.top);
+
+        const moveHandler = (me) => {
+            const dx = me.clientX - startX, dy = me.clientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) { isDragging = true; el.dataset.wasDragged = 'true'; }
+            if (isDragging) { el.style.left = (currentLeft + dx) + 'px'; el.style.top = (currentTop + dy) + 'px'; }
         };
-
-        let isDragging = false;
-        let startX, startY;
-
-        el.onmousedown = (e) => {
-            if (e.button !== 0) return;
-            isDragging = false;
-            el.dataset.wasDragged = 'false';
-            startX = e.clientX;
-            startY = e.clientY;
-            
-            const currentLeft = parseFloat(el.style.left);
-            const currentTop = parseFloat(el.style.top);
-
-            const moveHandler = (me) => {
-                const dx = me.clientX - startX;
-                const dy = me.clientY - startY;
-                if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
-                    isDragging = true;
-                    el.dataset.wasDragged = 'true';
+        
+        const upHandler = (upEvent) => {
+            window.removeEventListener('mousemove', moveHandler); window.removeEventListener('mouseup', upHandler);
+            if (isDragging) {
+                const rect = canvas.getBoundingClientRect();
+                if (upEvent.clientX < rect.left - 20 || upEvent.clientX > rect.right + 20 || 
+                    upEvent.clientY < rect.top - 20 || upEvent.clientY > rect.bottom + 20) {
+                    el.remove(); 
+                    canvasItems = canvasItems.filter(i => i.id !== itemId); 
+                    if(tooltip) tooltip.style.display = 'none'; 
+                    updateOccupancy(); 
+                    return;
                 }
-                if (isDragging) {
-                    el.style.left = (currentLeft + dx) + 'px';
-                    el.style.top = (currentTop + dy) + 'px';
-                }
-            };
-            
-            const upHandler = (upEvent) => {
-                window.removeEventListener('mousemove', moveHandler);
-                window.removeEventListener('mouseup', upHandler);
-                
-                if (isDragging) {
-                    const rect = canvas.getBoundingClientRect();
-                    if (upEvent.clientX < rect.left - 20 || upEvent.clientX > rect.right + 20 || 
-                        upEvent.clientY < rect.top - 20 || upEvent.clientY > rect.bottom + 20) {
-                        
-                        el.remove();
-                        canvasItems = canvasItems.filter(i => i.id !== itemId);
-                        tooltip.style.display = 'none';
-                        updateOccupancy(); // 删除时更新面积
-                        return;
-                    }
-                    
-                    updateItemState(itemId, { 
-                        x: parseFloat(el.style.left), 
-                        y: parseFloat(el.style.top) 
-                    });
-                }
-            };
-            
-            window.addEventListener('mousemove', moveHandler);
-            window.addEventListener('mouseup', upHandler);
+                updateItemState(itemId, { x: parseFloat(el.style.left), y: parseFloat(el.style.top) });
+            }
         };
+        window.addEventListener('mousemove', moveHandler); window.addEventListener('mouseup', upHandler);
+    };
 
-        el.onmouseenter = () => {
-            if(isDragging) return;
+    el.onmouseenter = () => {
+        if(isDragging) return; 
+        if(tooltip) {
             tooltip.style.display = 'block';
             let shapeName = data.shape === 'Square' ? '正方形 (1:1)' : data.shape === 'Rectangle' ? '长方形 (1:3)' : data.shape === 'Circle' ? '圆形' : '等边三角';
             tooltip.innerHTML = `<strong style="color:#023e8a;">${data.name}</strong><br>面积: ${data.area}㎡<br>形状: ${shapeName}`;
-        };
-        el.onmousemove = (e) => {
-            tooltip.style.left = (e.clientX + 15) + 'px';
-            tooltip.style.top = (e.clientY + 15) + 'px';
-        };
-        el.onmouseleave = () => tooltip.style.display = 'none';
-
-        canvas.appendChild(el);
-        canvasItems.push({ id: itemId, el, data, x, y, rotation: currentRotation });
-        
-        updateOccupancy(); // 添加新物品时更新面积
-    }
-
-    function updateItemState(id, updates) {
-        const item = canvasItems.find(i => i.id === id);
-        if (item) Object.assign(item, updates);
-    }
-
-    function calcDims(shape, area) {
-        const areaPx = area * PX_PER_METER * PX_PER_METER;
-        if (shape === 'Circle') {
-            const r = Math.sqrt(areaPx / Math.PI);
-            return { w: r*2, h: r*2 };
         }
-        if (shape === 'Triangle') {
-            const sqrt3 = 1.73205;
-            const side = Math.sqrt((4 * areaPx) / sqrt3);
-            const height = side * (sqrt3 / 2);
-            return { w: side, h: height };
-        }
-        if (shape === 'Rectangle') {
-            const h = Math.sqrt(areaPx / 3);
-            return { w: h * 3, h: h };
-        }
-        const s = Math.sqrt(areaPx);
-        return { w: s, h: s };
-    }
+    };
+    el.onmousemove = (e) => { if(tooltip) { tooltip.style.left = (e.clientX + 15) + 'px'; tooltip.style.top = (e.clientY + 15) + 'px'; } };
+    el.onmouseleave = () => { if(tooltip) tooltip.style.display = 'none'; };
 
-    function getSelectedSlot() {
-        return document.getElementById('slot-select').value;
-    }
+    canvas.appendChild(el);
+    canvasItems.push({ id: itemId, el, data, x, y, rotation: currentRotation });
+    updateOccupancy(); 
+}
 
-    function saveLayout() {
-        const slot = getSelectedSlot();
-        const stateToSave = canvasItems.map(item => ({
-            name: item.data.name,
-            shape: item.data.shape,
-            area: item.data.area,
-            color: item.data.color,
-            x: parseFloat(item.el.style.left),
-            y: parseFloat(item.el.style.top),
-            rotation: item.rotation
-        }));
-        localStorage.setItem('whiteout_v55_slot_' + slot, JSON.stringify(stateToSave));
-        alert(`✅ 方案 ${slot} 已成功保存！`);
-    }
+function updateItemState(id, updates) {
+    const item = canvasItems.find(i => i.id === id);
+    if (item) Object.assign(item, updates);
+}
 
-    function loadLayout() {
-        const slot = getSelectedSlot();
-        const dataStr = localStorage.getItem('whiteout_v55_slot_' + slot);
-        if (!dataStr) return alert(`⚠️ 槽位 ${slot} 为空，没有找到存档！`);
-        
-        clearCanvas(false);
-        const parsedData = JSON.parse(dataStr);
-        parsedData.forEach(d => {
-            const itemData = { name: d.name, shape: d.shape, area: d.area, color: d.color };
-            spawnItem(itemData, d.x, d.y, d.rotation);
-        });
-        updateOccupancy(); // 读取存档后更新面积
-    }
+function calcDims(shape, area) {
+    const areaPx = area * PX * PX;
+    if (shape === 'Circle') { const r = Math.sqrt(areaPx / Math.PI); return { w: r*2, h: r*2 }; }
+    if (shape === 'Triangle') { const s = Math.sqrt((4 * areaPx) / 1.732); return { w: s, h: s * 0.866 }; }
+    if (shape === 'Rectangle') { const h = Math.sqrt(areaPx / 3); return { w: h * 3, h: h }; }
+    const s = Math.sqrt(areaPx); return { w: s, h: s };
+}
 
-    function clearCanvas(requireConfirm = true) {
-        if (requireConfirm && !confirm("确定要清空画布上的所有物资吗？")) return;
-        const items = canvas.querySelectorAll('.placed-item');
-        items.forEach(i => i.remove());
-        canvasItems = [];
-        updateOccupancy(); // 清空时更新面积
-    }
+function updateOccupancy() {
+    let usedArea = 0;
+    canvasItems.forEach(item => { usedArea += parseFloat(item.data.area); });
+    const percentage = ((usedArea / TOTAL_AREA) * 100).toFixed(1);
+    const display = document.getElementById('occupancy-display');
+    display.innerText = `场地占用: ${usedArea}㎡ / ${TOTAL_AREA}㎡ (${percentage}%)`;
+    if (percentage > 70) { display.style.color = "#d90429"; display.style.background = "#fff0f3"; } 
+    else if (percentage > 50) { display.style.color = "#fb8500"; display.style.background = "#fff8ec"; } 
+    else { display.style.color = "#00b4d8"; display.style.background = "#e0fbfc"; }
+}
 
-    initWarehouse();
+function getSelectedSlot() { return document.getElementById('slot-select').value; }
+
+function saveLayout() {
+    const slot = getSelectedSlot();
+    const stateToSave = {
+        bg: document.getElementById('bg-select').value,
+        items: canvasItems.map(item => ({
+            name: item.data.name, shape: item.data.shape, area: item.data.area, color: item.data.color,
+            isCustom: item.data.isCustom||false, x: parseFloat(item.el.style.left), y: parseFloat(item.el.style.top), rotation: item.rotation
+        }))
+    };
+    localStorage.setItem('whiteout_v9_slot_' + slot, JSON.stringify(stateToSave));
+    alert(`✅ 方案 ${slot} 已成功保存！`);
+}
+
+function loadLayout() {
+    const slot = getSelectedSlot();
+    const dataStr = localStorage.getItem('whiteout_v9_slot_' + slot);
+    if (!dataStr) return alert(`⚠️ 槽位 ${slot} 为空，没有找到存档！`);
+    
+    clearCanvas(false);
+    const parsedData = JSON.parse(dataStr);
+    
+    const itemsToLoad = Array.isArray(parsedData) ? parsedData : parsedData.items;
+    
+    if (!Array.isArray(parsedData) && parsedData.bg) {
+        document.getElementById('bg-select').value = parsedData.bg;
+        changeBg();
+    }
+    
+    itemsToLoad.forEach(d => {
+        const found = defaultItems.find(di => di.name === d.name);
+        const itemData = found || { name: d.name, shape: d.shape, area: d.area, color: d.color, isCustom: d.isCustom, renderFn: null };
+        // 如果是读取出来的，直接覆盖面积即可实现自适应
+        if(itemData.renderFn === null && d.area) itemData.area = d.area; 
+        spawnItem(itemData, d.x, d.y, d.rotation);
+    });
+    updateOccupancy(); 
+}
+
+function clearCanvas(requireConfirm = true) {
+    if (requireConfirm && !confirm("确定要清空画布上的所有物资吗？")) return;
+    canvas.querySelectorAll('.placed-item').forEach(i => i.remove());
+    canvasItems = []; updateOccupancy(); 
+}
+
+initWarehouse();
 </script>
 </body>
 </html>
