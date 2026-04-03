@@ -675,6 +675,239 @@ function drawBBQStall(w, h) {
     return c;
 }
 
+
+// ── 音箱 ──────────────────────────────────────────────────────────────────
+function drawSpeaker(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,w,h);
+    const cx=w/2, cy=h/2, r=Math.min(w,h)*0.48;
+
+    // 箱体 (深色木纹方形)
+    ctx.fillStyle='#1e1e22';
+    ctx.beginPath(); ctx.roundRect(cx-r,cy-r,r*2,r*2,r*0.12); ctx.fill();
+    ctx.fillStyle='#2e2e36';
+    ctx.beginPath(); ctx.roundRect(cx-r*0.88,cy-r*0.88,r*1.76,r*1.76,r*0.10); ctx.fill();
+
+    // 木纹侧边条
+    ctx.fillStyle='#3a2a1a';
+    ctx.fillRect(cx-r*0.90,cy-r*0.90, r*0.10, r*1.80);
+    ctx.fillRect(cx+r*0.80,cy-r*0.90, r*0.10, r*1.80);
+
+    // 主扬声器振膜 (大圆 → 网格布)
+    ctx.fillStyle='#111116';
+    ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*0.52,0,Math.PI*2); ctx.fill();
+    // 同心波纹
+    [0.52,0.40,0.28].forEach(rr=>{
+        ctx.strokeStyle = rr===0.52 ? '#444' : '#333';
+        ctx.lineWidth = rr===0.52 ? 1.5 : 0.8;
+        ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*rr,0,Math.PI*2); ctx.stroke();
+    });
+    // 中央防尘帽
+    ctx.fillStyle='#2a5080';
+    ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*0.14,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#4080c0';
+    ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*0.07,0,Math.PI*2); ctx.fill();
+
+    // 下方小高音头
+    ctx.fillStyle='#111116';
+    ctx.beginPath(); ctx.arc(cx,cy+r*0.60,r*0.18,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#333'; ctx.lineWidth=0.8;
+    [0.18,0.12,0.06].forEach(rr=>{
+        ctx.beginPath(); ctx.arc(cx,cy+r*0.60,r*rr,0,Math.PI*2); ctx.stroke();
+    });
+    ctx.fillStyle='#505050';
+    ctx.beginPath(); ctx.arc(cx,cy+r*0.60,r*0.04,0,Math.PI*2); ctx.fill();
+
+    // 品牌角标 (左下小LED灯)
+    ctx.fillStyle='#00d4ff';
+    ctx.beginPath(); ctx.arc(cx-r*0.65,cy+r*0.72,r*0.04,0,Math.PI*2); ctx.fill();
+
+    // 箱体外框高光
+    ctx.strokeStyle='#4a4a56'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(cx-r,cy-r,r*2,r*2,r*0.12); ctx.stroke();
+    return c;
+}
+
+// ── 升级提示牌 ───────────────────────────────────────────────────────────────
+function drawSignboard(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,w,h);
+
+    // 木板底座 (菱形旋转, 参考游戏截图)
+    ctx.save();
+    ctx.translate(w*0.38, h*0.52);
+    ctx.rotate(-0.42); // 倾斜感
+
+    // 木板主体
+    ctx.fillStyle='#5c3a1e';
+    ctx.beginPath(); ctx.roundRect(-w*0.28,-h*0.30,w*0.56,h*0.60,4); ctx.fill();
+    // 木纹高光
+    ctx.fillStyle='#6e4828';
+    ctx.beginPath(); ctx.roundRect(-w*0.26,-h*0.28,w*0.52,h*0.56,3); ctx.fill();
+    // 木板横纹
+    ctx.strokeStyle='rgba(80,40,10,0.5)'; ctx.lineWidth=1;
+    [-0.10,0,0.10].forEach(dy=>{
+        ctx.beginPath(); ctx.moveTo(-w*0.24,h*dy); ctx.lineTo(w*0.24,h*dy); ctx.stroke();
+    });
+    // 木板钉子 (四角)
+    [[-0.22,-0.24],[0.22,-0.24],[-0.22,0.24],[0.22,0.24]].forEach(([nx,ny])=>{
+        ctx.fillStyle='#c8a060';
+        ctx.beginPath(); ctx.arc(w*nx,h*ny,2.5,0,Math.PI*2); ctx.fill();
+    });
+
+    // 数字 "1" (白色粗体)
+    ctx.fillStyle='#ffffff';
+    ctx.font = `bold ${h*0.36}px 'Segoe UI', sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('1', 0, h*0.02);
+
+    ctx.restore();
+
+    // 绿色向上箭头 (参考图右侧大绿箭, 俯视稍倾斜)
+    ctx.save();
+    ctx.translate(w*0.74, h*0.44);
+    ctx.rotate(-0.30);
+
+    // 箭头主体 (填充绿色)
+    ctx.fillStyle='#3dcc2a';
+    ctx.beginPath();
+    // 箭头头部 (三角)
+    ctx.moveTo(0, -h*0.32);
+    ctx.lineTo(w*0.20, -h*0.02);
+    ctx.lineTo(w*0.09, -h*0.02);
+    ctx.lineTo(w*0.09, h*0.28);
+    ctx.lineTo(-w*0.09, h*0.28);
+    ctx.lineTo(-w*0.09, -h*0.02);
+    ctx.lineTo(-w*0.20, -h*0.02);
+    ctx.closePath();
+    ctx.fill();
+    // 箭头轮廓
+    ctx.strokeStyle='#28a018'; ctx.lineWidth=1;
+    ctx.stroke();
+    // 高光
+    ctx.fillStyle='rgba(255,255,255,0.25)';
+    ctx.beginPath();
+    ctx.moveTo(0,-h*0.30);
+    ctx.lineTo(w*0.10,-h*0.04);
+    ctx.lineTo(w*0.05,-h*0.04);
+    ctx.lineTo(w*0.05,h*0.00);
+    ctx.lineTo(-w*0.04,h*0.00);
+    ctx.lineTo(-w*0.04,-h*0.04);
+    ctx.lineTo(-w*0.10,-h*0.04);
+    ctx.closePath(); ctx.fill();
+
+    ctx.restore();
+    return c;
+}
+
+// ── LED 大屏幕 ────────────────────────────────────────────────────────────────
+function drawLEDScreen(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,w,h);
+
+    // 参考手绘: 极细长矩形屏幕面 + 两端 X 形支架腿 (俯视投影)
+
+    const screenH = h * 0.34;        // 屏幕面厚度 (俯视看窄边)
+    const screenY = (h - screenH)/2; // 垂直居中
+    const legSpan = h * 0.32;        // 支架腿展开宽度
+
+    // ── 两端支架腿阴影 (投影到地面) ──
+    ctx.fillStyle='rgba(0,0,0,0.12)';
+    // 左支架阴影
+    ctx.beginPath();
+    ctx.moveTo(w*0.02+4, screenY-legSpan+4);
+    ctx.lineTo(w*0.10+4, screenY+screenH/2+4);
+    ctx.lineTo(w*0.02+4, screenY+screenH+legSpan+4);
+    ctx.lineTo(w*0+4,    screenY+screenH+legSpan+4);
+    ctx.lineTo(w*0+4,    screenY-legSpan+4);
+    ctx.closePath(); ctx.fill();
+    // 右支架阴影
+    ctx.beginPath();
+    ctx.moveTo(w*0.98+4, screenY-legSpan+4);
+    ctx.lineTo(w*0.90+4, screenY+screenH/2+4);
+    ctx.lineTo(w*0.98+4, screenY+screenH+legSpan+4);
+    ctx.lineTo(w*1.00+4, screenY+screenH+legSpan+4);
+    ctx.lineTo(w*1.00+4, screenY-legSpan+4);
+    ctx.closePath(); ctx.fill();
+
+    // ── 左侧 X 形支架 ──
+    const legCol = '#2a2e3a';
+    const legHighlight = '#4a5060';
+    ctx.strokeStyle=legCol; ctx.lineWidth=3; ctx.lineCap='round';
+    // 左支架: 两根腿从屏幕左端延伸, X 形展开
+    ctx.beginPath(); ctx.moveTo(w*0.09, screenY+screenH/2);
+    ctx.lineTo(w*0.01, screenY - legSpan); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.09, screenY+screenH/2);
+    ctx.lineTo(w*0.01, screenY+screenH+legSpan); ctx.stroke();
+    // 腿高光
+    ctx.strokeStyle=legHighlight; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(w*0.085, screenY+screenH/2);
+    ctx.lineTo(w*0.015,screenY-legSpan+2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.085,screenY+screenH/2);
+    ctx.lineTo(w*0.015,screenY+screenH+legSpan-2); ctx.stroke();
+    // 左支架脚端横档
+    ctx.strokeStyle=legCol; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(w*0.00,screenY-legSpan);
+    ctx.lineTo(w*0.04,screenY-legSpan); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.00,screenY+screenH+legSpan);
+    ctx.lineTo(w*0.04,screenY+screenH+legSpan); ctx.stroke();
+
+    // ── 右侧 X 形支架 ──
+    ctx.strokeStyle=legCol; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(w*0.91, screenY+screenH/2);
+    ctx.lineTo(w*0.99, screenY-legSpan); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.91, screenY+screenH/2);
+    ctx.lineTo(w*0.99, screenY+screenH+legSpan); ctx.stroke();
+    ctx.strokeStyle=legHighlight; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(w*0.915,screenY+screenH/2);
+    ctx.lineTo(w*0.985,screenY-legSpan+2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.915,screenY+screenH/2);
+    ctx.lineTo(w*0.985,screenY+screenH+legSpan-2); ctx.stroke();
+    ctx.strokeStyle=legCol; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(w*0.96,screenY-legSpan);
+    ctx.lineTo(w*1.00,screenY-legSpan); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.96,screenY+screenH+legSpan);
+    ctx.lineTo(w*1.00,screenY+screenH+legSpan); ctx.stroke();
+
+    // ── 屏幕主体 (细长矩形) ──
+    // 背板 (深色铁框)
+    ctx.fillStyle='#1a1c24';
+    ctx.beginPath(); ctx.roundRect(w*0.08, screenY, w*0.84, screenH, 3); ctx.fill();
+
+    // 屏幕显示面 (冷蓝深色, 模拟LED俯视)
+    ctx.fillStyle='#0d1a2e';
+    ctx.beginPath(); ctx.roundRect(w*0.09, screenY+screenH*0.10, w*0.82, screenH*0.80, 2); ctx.fill();
+
+    // LED像素点阵 (等间距小点, 模拟LED屏质感)
+    const cols=22, rows=3;
+    const dotW = w*0.82/cols, dotH = screenH*0.80/rows;
+    for(let row=0; row<rows; row++){
+        for(let col=0; col<cols; col++){
+            const dx = w*0.09 + (col+0.5)*dotW;
+            const dy = screenY+screenH*0.10 + (row+0.5)*dotH;
+            // 每个像素点颜色随机模拟画面
+            const hues = ['#1a4080','#2060b0','#10305a','#0d5090','#1850a0'];
+            ctx.fillStyle = hues[(row*7+col*3)%hues.length];
+            ctx.beginPath(); ctx.arc(dx,dy,dotW*0.28,0,Math.PI*2); ctx.fill();
+        }
+    }
+    // 模拟屏幕高亮区 (局部亮斑)
+    ctx.fillStyle='rgba(60,120,200,0.18)';
+    ctx.beginPath(); ctx.roundRect(w*0.25,screenY+screenH*0.12,w*0.20,screenH*0.76,2); ctx.fill();
+
+    // 铁框边缘线
+    ctx.strokeStyle='#3a4050'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(w*0.08,screenY,w*0.84,screenH,3); ctx.stroke();
+
+    // 屏幕两端连接块
+    [[w*0.08,screenY],[w*0.84+w*0.08,screenY]].forEach(([bx,by])=>{
+        ctx.fillStyle='#2a3040';
+        ctx.beginPath(); ctx.roundRect(bx-3,by-1,8,screenH+2,2); ctx.fill();
+    });
+
+    return c;
+}
+
 function drawIceBlock(w, h) {
     const c = mk(w, h); const ctx = c.getContext('2d');
     ctx.clearRect(0,0,w,h);
@@ -705,7 +938,10 @@ const defaultItems = [
     { name: "泰坦巨鸟", shape: "Square", area: 5, color: "#495057", isCustom: false, renderFn:(w,h)=>drawTitanBird(w,h) },
     { name: "冰封打卡框", shape: "Square", area: 1, color: "#a0d8ef", isCustom: false, renderFn:(w,h)=>drawIceBlock(w,h) },
     { name: "幸存者登记台", shape: "Square", area: 2, color: "#8b5a2b", isCustom: false, renderFn:(w,h)=>drawDesk(w,h) },
-    { name: "领主登记台", shape: "Square", area: 2, color: "#8b5a2b", isCustom: false, renderFn:(w,h)=>drawDesk(w,h) }
+    { name: "领主登记台", shape: "Square", area: 2, color: "#8b5a2b", isCustom: false, renderFn:(w,h)=>drawDesk(w,h) },
+    { name: "音箱", shape: "Square", area: 1, color: "#1e1e22", isCustom: false, renderFn:(w,h)=>drawSpeaker(w,h) },
+    { name: "升级提示牌", shape: "Rectangle", area: 1, color: "#5c3a1e", isCustom: false, renderFn:(w,h)=>drawSignboard(w,h) },
+    { name: "LED大屏幕", shape: "Rectangle", area: 5, color: "#1a1c24", isCustom: false, renderFn:(w,h)=>drawLEDScreen(w,h) }
 ];
 
 function initWarehouse() {
