@@ -49,7 +49,8 @@
     /* 给画板上方增加 45px 空间，防止上方通道被遮挡 */
     #canvas-container { width: 760px; height: 520px; background-color: #ffffff; border: 2px solid var(--border-color); position: relative; background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px); background-size: 40px 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: 45px; overflow: visible; border-radius: 8px; transition: background 0.3s; }
     
-    #screen { position: absolute; right: 0; bottom: 10%; width: 30px; height: 45%; background-color: #e9ecef; border-left: 3px solid #00b4d8; color: #495057; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; letter-spacing: 4px; writing-mode: vertical-lr; z-index: 5; box-shadow: -2px 0 10px rgba(0,0,0,0.1); }
+    /* 【重构主舞台】：恢复原有配色，与底边对齐 (bottom: 0)，覆盖右侧 80% 长度 (height: 80%) */
+    #screen { position: absolute; right: 0; bottom: 0; width: 80px; height: 80%; background-color: #e9ecef; border-left: 3px solid #00b4d8; color: #495057; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; letter-spacing: 4px; writing-mode: vertical-lr; z-index: 5; box-shadow: -2px 0 10px rgba(0,0,0,0.1); border-top-left-radius: 8px; }
     
     .aisle { position: absolute; width: 120px; height: 40px; border: 2px dashed #ffb703; color: #fb8500; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 13px; background: rgba(255,183,3,0.1); letter-spacing: 2px;}
     #aisle-t { top: -42px; left: 35%; border-bottom: none; }
@@ -115,16 +116,16 @@
 <div id="main">
     <div style="position:relative;">
         <div id="canvas-container">
-            <div id="screen">主舞台大屏幕</div>
+            <div id="screen">主舞台大屏幕区</div>
             <div class="aisle" id="aisle-t">通道</div>
             <div class="aisle" id="aisle-b">通道</div>
         </div>
         <div style="text-align:center;color:#023e8a;margin-top:55px;font-weight:bold;font-size:14px;">
             19m × 13m 展位推演区 (1m = 40px)
             <br>
-            <div id="occupancy-display" class="occupancy-highlight">场地占用: 0㎡ / 247㎡ (0.0%)</div>
+            <div id="occupancy-display" class="occupancy-highlight">场地占用: 20.8㎡ / 247㎡ (8.4%)</div>
             <div style="font-size:11px;color:#e76f51;margin-top:7px;font-weight:normal;">
-                💡 拖入物资 | 单击可旋转 | <b>拖出画布外即可删除</b>
+                💡 拖入物资 | 单击可旋转 | <b>拖出画布即可删除 | <span style="color:#d90429;">已包含主舞台固定占地 20.8㎡</span></b>
             </div>
         </div>
     </div>
@@ -134,6 +135,9 @@
 
 <script>
 const PX = 40, TOTAL_AREA = 247;
+// 核心更新：增加主舞台固定占地面积常数 (高10.4m x 宽2m = 20.8平方米)
+const STAGE_AREA = 20.8; 
+
 const canvas = document.getElementById('canvas-container');
 const warehouse = document.getElementById('warehouse');
 const tooltip = document.getElementById('tooltip'); 
@@ -200,38 +204,27 @@ function drawFurnace(w, h) {
 
 function drawMine(w, h) {
    const c = mk(w,h); const ctx = c.getContext('2d');
-    // 【修改】：强制透明底，去掉蓝色雪地填充
     ctx.clearRect(0, 0, w, h); 
 
-    // 右侧矿山建筑主体 — 木+石混合 (#7e4d46 暖棕)
     const bX=w*0.68, bW=w*0.28, bY=h*0.06, bH=h*0.88;
     ctx.fillStyle='#4f5779'; ctx.beginPath(); ctx.roundRect(bX,bY,bW,bH,3); ctx.fill();
-    // 建筑立面分层
     ctx.fillStyle='#7e4d46'; ctx.fillRect(bX+bW*0.1, bY+bH*0.35, bW*0.8, bH*0.55);
-    // 积雪屋顶
     ctx.fillStyle='#dde2f0'; ctx.beginPath(); ctx.roundRect(bX,bY,bW,bH*0.30,3); ctx.fill();
     ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.roundRect(bX+1,bY+1,bW-2,bH*0.18,3); ctx.fill();
-    // 门洞 (黑色矩形)
     ctx.fillStyle='#1a1c2a'; ctx.beginPath(); ctx.roundRect(bX+bW*0.28,bY+bH*0.55,bW*0.44,bH*0.35,2); ctx.fill();
-    // 门洞黄色灯光
     ctx.fillStyle='rgba(255,200,80,0.45)'; ctx.beginPath(); ctx.roundRect(bX+bW*0.28,bY+bH*0.55,bW*0.44,bH*0.35,2); ctx.fill();
-    // 建筑外框
     ctx.strokeStyle='#2a2c42'; ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(bX,bY,bW,bH,3); ctx.stroke();
 
-    // 铁轨 — 从左侧一直延伸到矿山建筑入口
     const trackY1=h*0.38, trackY2=h*0.58, trackEndX=bX;
-    // 轨道钢轨 (深色)
     ctx.strokeStyle='#2a2c42'; ctx.lineWidth=2.5;
     ctx.beginPath(); ctx.moveTo(w*0.03, trackY1); ctx.lineTo(trackEndX, trackY1); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(w*0.03, trackY2); ctx.lineTo(trackEndX, trackY2); ctx.stroke();
-    // 枕木 (暖棕色) — 均匀分布
     ctx.strokeStyle='#7e4d46'; ctx.lineWidth=2;
     const tieCount = 9;
     for(let i=0; i<=tieCount; i++){
         const tx = w*0.03 + i*(trackEndX - w*0.03)/tieCount;
         ctx.beginPath(); ctx.moveTo(tx, trackY1-h*0.09); ctx.lineTo(tx, trackY2+h*0.09); ctx.stroke();
     }
-    // 轨道上的钢钉高光
     ctx.fillStyle='#9da0bb';
     for(let i=1; i<tieCount; i+=2){
         const tx = w*0.03 + i*(trackEndX - w*0.03)/tieCount;
@@ -239,42 +232,33 @@ function drawMine(w, h) {
         ctx.beginPath(); ctx.arc(tx, trackY2, 2, 0, Math.PI*2); ctx.fill();
     }
 
-    // 矿车 — 停在轨道中段 (#4f5779 深蓝灰)
     const cartX=w*0.25, cartY=trackY1-h*0.02, cartW=w*0.22, cartH=h*0.42;
-    // 车身
     ctx.fillStyle='#4f5779'; ctx.beginPath(); ctx.roundRect(cartX,cartY,cartW,cartH,3); ctx.fill();
-    // 车斗内部 (深色)
     ctx.fillStyle='#2a2c42'; ctx.fillRect(cartX+cartW*0.08,cartY+cartH*0.12,cartW*0.84,cartH*0.62);
-    // 矿石 — 不规则深色块 + 少量橙色铁矿石
     [[0.12,0.20,'#78788d'],[0.18,0.28,'#5a5c72'],[0.10,0.35,'#9da0bb'],
      [0.22,0.15,'#7e4d46'],[0.06,0.42,'#78788d']].forEach(([ox,oy,col])=>{
         ctx.fillStyle=col;
         ctx.beginPath(); ctx.arc(cartX+cartW*ox+cartW*.2, cartY+cartH*oy+cartH*.1, h*0.06, 0, Math.PI*2); ctx.fill();
     });
-    // 车轮 (4个)
     const wheelY = cartY+cartH;
     [[cartX+cartW*0.15],[cartX+cartW*0.75]].forEach(([wx])=>{
         ctx.fillStyle='#2a2c42'; ctx.beginPath(); ctx.arc(wx,wheelY,h*0.06,0,Math.PI*2); ctx.fill();
         ctx.fillStyle='#78788d'; ctx.beginPath(); ctx.arc(wx,wheelY,h*0.035,0,Math.PI*2); ctx.fill();
     });
-    // 车框外框
     ctx.strokeStyle='#9da0bb'; ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(cartX,cartY,cartW,cartH,3); ctx.stroke();
 
-    // 左侧矿石堆 — 多色不规则堆叠
     const oreColors=['#2a2c42','#4f5779','#7e4d46','#78788d'];
     [[w*0.10,h*0.78,h*0.12],[w*0.05,h*0.82,h*0.09],[w*0.17,h*0.83,h*0.08],
      [w*0.08,h*0.72,h*0.08],[w*0.14,h*0.72,h*0.07]].forEach(([ox,oy,or],i)=>{
         ctx.fillStyle=oreColors[i%oreColors.length];
         ctx.beginPath(); ctx.arc(ox,oy,or,0,Math.PI*2); ctx.fill();
     });
-    // 矿堆上的高光
     ctx.fillStyle='rgba(157,160,187,0.5)';
     ctx.beginPath(); ctx.arc(w*0.09,h*0.76,h*0.04,0,Math.PI*2); ctx.fill();
 
-    // 工具 — 左下角斜放的铁镐
     ctx.save(); ctx.translate(w*0.05,h*0.55); ctx.rotate(Math.PI/5);
-    ctx.fillStyle='#5c3a21'; ctx.fillRect(-2,-h*0.18,4,h*0.36); // 镐柄
-    ctx.fillStyle='#9da0bb'; // 镐头
+    ctx.fillStyle='#5c3a21'; ctx.fillRect(-2,-h*0.18,4,h*0.36); 
+    ctx.fillStyle='#9da0bb'; 
     ctx.beginPath(); ctx.moveTo(-h*0.07,-h*0.19); ctx.lineTo(h*0.07,-h*0.19);
     ctx.lineTo(h*0.04,-h*0.10); ctx.lineTo(-h*0.04,-h*0.10); ctx.closePath(); ctx.fill();
     ctx.restore();
@@ -283,38 +267,29 @@ function drawMine(w, h) {
 
 function drawHunterHut(w, h) {
     const c = mk(w,h); const ctx = c.getContext('2d');
-
-    // 【修改】：强制透明底，去掉土棕色填充
     ctx.clearRect(0, 0, w, h); 
 
-    // 主建筑体 — 木质小屋左2/3 (#634a44 棕红)
     const hX=w*0.04, hY=h*0.08, hW=w*0.56, hH=h*0.84;
     ctx.fillStyle='#634a44'; ctx.beginPath(); ctx.roundRect(hX,hY,hW,hH,4); ctx.fill();
-    // 外墙木纹线
     ctx.strokeStyle='#4a3228'; ctx.lineWidth=1;
     for(let i=1;i<5;i++){
         ctx.beginPath(); ctx.moveTo(hX,hY+hH*i/5); ctx.lineTo(hX+hW,hY+hH*i/5); ctx.stroke();
     }
-    // 屋顶 (兽皮色, 覆盖上方)
     ctx.fillStyle='#8e6755';
     ctx.beginPath();
     ctx.moveTo(hX-w*0.01, hY);
     ctx.lineTo(hX+hW/2, hY-h*0.05);
     ctx.lineTo(hX+hW+w*0.01, hY);
     ctx.closePath(); ctx.fill();
-    // 屋顶积雪
     ctx.fillStyle='#dde2ef';
     ctx.beginPath();
     ctx.moveTo(hX+hW*0.1, hY+2);
     ctx.lineTo(hX+hW/2, hY-h*0.03);
     ctx.lineTo(hX+hW*0.9, hY+2);
     ctx.closePath(); ctx.fill();
-    // 门 (圆拱门)
     ctx.fillStyle='#2a1a12';
     ctx.beginPath(); ctx.roundRect(hX+hW*0.35,hY+hH*0.55,hW*0.28,hH*0.42,hW*0.06); ctx.fill();
-    // 门框高光
     ctx.strokeStyle='#8e6755'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.roundRect(hX+hW*0.35,hY+hH*0.55,hW*0.28,hH*0.42,hW*0.06); ctx.stroke();
-    // 窗户 (左侧两个小窗)
     [[hX+hW*0.10,hY+hH*0.25],[hX+hW*0.10,hY+hH*0.55]].forEach(([wx,wy])=>{
         ctx.fillStyle='#c9b8a8'; ctx.beginPath(); ctx.roundRect(wx,wy,hW*0.18,hH*0.18,2); ctx.fill();
         ctx.strokeStyle='#4a3228'; ctx.lineWidth=1; ctx.stroke();
@@ -322,33 +297,23 @@ function drawHunterHut(w, h) {
         ctx.beginPath(); ctx.moveTo(wx+hW*0.09,wy); ctx.lineTo(wx+hW*0.09,wy+hH*0.18); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(wx,wy+hH*0.09); ctx.lineTo(wx+hW*0.18,wy+hH*0.09); ctx.stroke();
     });
-    // 主建筑外框
     ctx.strokeStyle='#2c2b48'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.roundRect(hX,hY,hW,hH,4); ctx.stroke();
 
-    // 右侧区域 — 户外装备展示
     const rX=w*0.64;
-
-    // 武器架 — 两支猎枪 (长矩形 + 枪管)
-    // 枪架横木
     ctx.fillStyle='#5c3a21'; ctx.fillRect(rX, h*0.20, w*0.30, h*0.04);
-    // 猎枪1 (斜放)
     ctx.save(); ctx.translate(rX+w*0.07, h*0.26); ctx.rotate(-0.18);
-    ctx.fillStyle='#3b2f2f'; ctx.fillRect(-1,-h*0.22,3,h*0.44); // 枪托
-    ctx.fillStyle='#78788d'; ctx.fillRect(-1,-h*0.22,2.5,h*0.10); // 枪管 (深色金属)
+    ctx.fillStyle='#3b2f2f'; ctx.fillRect(-1,-h*0.22,3,h*0.44); 
+    ctx.fillStyle='#78788d'; ctx.fillRect(-1,-h*0.22,2.5,h*0.10); 
     ctx.fillStyle='#9da0bb'; ctx.fillRect(0,-h*0.22,1.5,h*0.10);
     ctx.restore();
-    // 猎枪2
     ctx.save(); ctx.translate(rX+w*0.20, h*0.24); ctx.rotate(0.15);
     ctx.fillStyle='#3b2f2f'; ctx.fillRect(-1,-h*0.20,3,h*0.40);
     ctx.fillStyle='#78788d'; ctx.fillRect(-1,-h*0.20,2.5,h*0.09);
     ctx.restore();
 
-    // 捕兽夹 — 圆形锯齿状 (双层圆 + 弹簧)
     [[rX+w*0.10,h*0.62],[rX+w*0.24,h*0.68]].forEach(([tx,ty])=>{
-        // 外圆 (金属灰)
         ctx.strokeStyle='#5a5d74'; ctx.lineWidth=2.5;
         ctx.beginPath(); ctx.arc(tx,ty,h*0.11,0,Math.PI*2); ctx.stroke();
-        // 锯齿 (短线)
         for(let i=0;i<8;i++){
             const a=i/8*Math.PI*2;
             ctx.strokeStyle='#9da0bb'; ctx.lineWidth=1.5;
@@ -357,12 +322,10 @@ function drawHunterHut(w, h) {
             ctx.lineTo(tx+Math.cos(a)*h*0.11,ty+Math.sin(a)*h*0.11);
             ctx.stroke();
         }
-        // 中央弹簧/压片
         ctx.fillStyle='#4f5779'; ctx.beginPath(); ctx.arc(tx,ty,h*0.04,0,Math.PI*2); ctx.fill();
         ctx.fillStyle='#9da0bb'; ctx.beginPath(); ctx.arc(tx,ty,h*0.02,0,Math.PI*2); ctx.fill();
     });
 
-    // 兽皮 — 右上角晾晒的皮革 (不规则棕色块)
     ctx.fillStyle='#8e6755';
     ctx.beginPath();
     ctx.moveTo(rX+w*0.02, h*0.05);
@@ -371,7 +334,6 @@ function drawHunterHut(w, h) {
     ctx.quadraticCurveTo(rX+w*0.12,h*0.22, rX-w*0.01,h*0.16);
     ctx.closePath(); ctx.fill();
     ctx.strokeStyle='#634a44'; ctx.lineWidth=0.8; ctx.stroke();
-    // 皮革纹理线
     ctx.strokeStyle='rgba(74,50,40,0.3)'; ctx.lineWidth=0.6;
     ctx.beginPath(); ctx.moveTo(rX+w*0.08,h*0.07); ctx.lineTo(rX+w*0.22,h*0.16); ctx.stroke();
     return c;
@@ -379,13 +341,9 @@ function drawHunterHut(w, h) {
 
 function drawHQ(w, h) {
     const c = mk(w,h); const ctx = c.getContext('2d');
-
-   // 【修改】：强制透明底，去掉土棕色填充
     ctx.clearRect(0, 0, w, h); 
 
-    // 中央主体建筑 — 八边形轮廓 (参考图菱形钢铁结构)
     const cx=w*0.5, cy=h*0.5;
-    // 外层石墙
     ctx.fillStyle='#5a5d74';
     ctx.beginPath();
     ctx.moveTo(w*0.15,h*0.50); ctx.lineTo(w*0.30,h*0.12); ctx.lineTo(w*0.70,h*0.12);
@@ -393,12 +351,10 @@ function drawHQ(w, h) {
     ctx.closePath(); ctx.fill();
     ctx.strokeStyle='#888da6'; ctx.lineWidth=1.5; ctx.stroke();
 
-    // 中央菱形屋顶 (冰雪覆盖, 参考图顶部白色区域)
     ctx.fillStyle='#abb7d3';
     ctx.beginPath();
     ctx.moveTo(cx, h*0.10); ctx.lineTo(w*0.78,cy); ctx.lineTo(cx,h*0.90); ctx.lineTo(w*0.22,cy);
     ctx.closePath(); ctx.fill();
-    // 屋顶积雪
     ctx.fillStyle='#d1d3e8';
     ctx.beginPath();
     ctx.moveTo(cx,h*0.12); ctx.lineTo(w*0.70,cy); ctx.lineTo(cx,h*0.88); ctx.lineTo(w*0.30,cy);
@@ -407,41 +363,33 @@ function drawHQ(w, h) {
     ctx.beginPath();
     ctx.moveTo(cx,h*0.16); ctx.lineTo(w*0.64,cy); ctx.lineTo(cx,h*0.84); ctx.lineTo(w*0.36,cy);
     ctx.closePath(); ctx.fill();
-    // 菱形中央蓝色科技窗 (参考图蓝色天窗)
     ctx.fillStyle='#436298';
     ctx.beginPath();
     ctx.moveTo(cx,h*0.28); ctx.lineTo(w*0.62,cy); ctx.lineTo(cx,h*0.72); ctx.lineTo(w*0.38,cy);
     ctx.closePath(); ctx.fill();
     ctx.strokeStyle='#6a92d1'; ctx.lineWidth=1; ctx.stroke();
 
-    // 中央战术地图桌 (圆形, 正中)
     ctx.fillStyle='#2a2c42'; ctx.beginPath(); ctx.arc(cx,cy,h*0.12,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='#5a5d74'; ctx.lineWidth=1; ctx.stroke();
     ctx.fillStyle='#436298'; ctx.beginPath(); ctx.arc(cx,cy,h*0.08,0,Math.PI*2); ctx.fill();
-    // 地图格线
     ctx.strokeStyle='#6a92d1'; ctx.lineWidth=0.5;
     ctx.beginPath(); ctx.moveTo(cx-h*0.08,cy); ctx.lineTo(cx+h*0.08,cy); ctx.stroke();
     ctx.beginPath(); ctx.moveTo(cx,cy-h*0.08); ctx.lineTo(cx,cy+h*0.08); ctx.stroke();
 
-    // 四角旗帜 — 红色三角旗 (参考图中旗帜)
     const flagPoles=[
         [w*0.15,h*0.50],[w*0.85,h*0.50],[w*0.50,h*0.12],[w*0.50,h*0.88]
     ];
     flagPoles.forEach(([fx,fy],i)=>{
-        // 旗杆
         ctx.strokeStyle='#888da6'; ctx.lineWidth=1.5;
         ctx.beginPath(); ctx.moveTo(fx,fy); ctx.lineTo(fx,fy-h*0.16); ctx.stroke();
-        // 三角旗
         ctx.fillStyle='#c72a2a';
         ctx.beginPath();
         if(i<2){
-            // 左右旗帜向外展开
             const dir = i===0?-1:1;
             ctx.moveTo(fx,fy-h*0.16);
             ctx.lineTo(fx+dir*w*0.08,fy-h*0.10);
             ctx.lineTo(fx,fy-h*0.04);
         } else {
-            // 上下旗帜
             ctx.moveTo(fx,fy-h*0.16);
             ctx.lineTo(fx+w*0.06,fy-h*0.10);
             ctx.lineTo(fx,fy-h*0.04);
@@ -449,32 +397,63 @@ function drawHQ(w, h) {
         ctx.closePath(); ctx.fill();
     });
 
-     // 上下两排各4个小圆圈表示座位
     const seatXs = [w*0.25, w*0.42, w*0.58, w*0.75];
     seatXs.forEach(sx => {
-        // 上排座位
         ctx.fillStyle='#495057'; ctx.beginPath(); ctx.arc(sx, h*0.2, h*0.07, 0, Math.PI*2); ctx.fill();
         ctx.strokeStyle='#bde0fe'; ctx.lineWidth=1; ctx.stroke();
-        // 下排座位
         ctx.fillStyle='#495057'; ctx.beginPath(); ctx.arc(sx, h*0.8, h*0.07, 0, Math.PI*2); ctx.fill();
         ctx.strokeStyle='#bde0fe'; ctx.lineWidth=1; ctx.stroke();
     });
 
     return c;
 }
+
+// ── 营地厨房 ──
+function drawKitchen(w, h) {
+    const c = mk(w, h); const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,w,h);
+
+    ctx.fillStyle = '#634a44';
+    ctx.beginPath(); ctx.roundRect(0, 0, w, h, 4); ctx.fill();
+    ctx.strokeStyle = '#4a3228'; ctx.lineWidth = 1; ctx.strokeRect(1, 1, w-2, h-2);
+
+    ctx.strokeStyle = 'rgba(40,20,10,0.4)'; ctx.lineWidth = 0.5;
+    for(let i=1; i<4; i++){ ctx.beginPath(); ctx.moveTo(0, h*i/4); ctx.lineTo(w, h*i/4); ctx.stroke(); }
+
+    const cx = w*0.4, cy = h*0.5;
+    ctx.fillStyle = 'rgba(255, 100, 0, 0.6)';
+    ctx.beginPath(); ctx.arc(cx, cy, w*0.25, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#f9c834';
+    ctx.beginPath(); ctx.arc(cx, cy, w*0.15, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#1a1c2a';
+    ctx.beginPath(); ctx.arc(cx, cy, w*0.18, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#b04c2d';
+    ctx.beginPath(); ctx.arc(cx, cy, w*0.14, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#e8c8a1'; ctx.beginPath(); ctx.arc(cx-w*0.05, cy-h*0.05, w*0.04, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#6c8c6c'; ctx.beginPath(); ctx.arc(cx+w*0.05, cy+h*0.04, w*0.03, 0, Math.PI*2); ctx.fill();
+
+    ctx.fillStyle = '#8b5a2b';
+    ctx.fillRect(w*0.65, h*0.1, w*0.3, h*0.8);
+    ctx.strokeStyle = '#5c3a21'; ctx.strokeRect(w*0.65, h*0.1, w*0.3, h*0.8);
+
+    ctx.fillStyle = '#c8a060'; ctx.beginPath(); ctx.arc(w*0.8, h*0.25, w*0.06, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#9db6dc'; ctx.fillRect(w*0.72, h*0.4, w*0.16, h*0.15);
+    ctx.fillStyle = '#adb5bd'; ctx.beginPath(); ctx.arc(w*0.8, h*0.75, w*0.07, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#f9c834'; ctx.beginPath(); ctx.arc(w*0.8, h*0.75, w*0.03, 0, Math.PI*2); ctx.fill();
+
+    return c;
+}
+
 function drawDesk(w, h) {
     const c = mk(w, h); const ctx = c.getContext('2d');
-    // 木制方桌底座
     ctx.fillStyle = '#8b5a2b'; ctx.fillRect(0, 0, w, h);
     ctx.strokeStyle = '#5c3a21'; ctx.lineWidth = 2; ctx.strokeRect(1, 1, w-2, h-2);
-    // 冰雪垂坠桌布
     ctx.fillStyle = '#e0f7fa';
     ctx.beginPath();
     ctx.moveTo(0, 0); ctx.lineTo(w, 0); ctx.lineTo(w, h*0.6);
     ctx.quadraticCurveTo(w*0.8, h*0.8, w*0.6, h*0.5);
     ctx.quadraticCurveTo(w*0.4, h*0.7, w*0.2, h*0.5);
     ctx.lineTo(0, h*0.6); ctx.fill();
-    // 桌上登记小册子
     ctx.fillStyle = '#333'; ctx.fillRect(w*0.4, h*0.2, w*0.2, h*0.15);
     return c;
 }
@@ -538,6 +517,7 @@ function drawPolarBear(w, h) {
 
 function drawTitanBird(w, h) {
     const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,w,h);
     const cx=w/2, cy=h/2, r=Math.min(w,h)/2;
     ctx.beginPath(); ctx.ellipse(cx,cy+r*.1,r*.75,r*.28,0,0,Math.PI*2); ctx.fillStyle='rgba(40,50,80,0.25)'; ctx.fill();
     ctx.beginPath(); ctx.ellipse(cx,cy+r*.18,r*.38,r*.14,0,0,Math.PI*2); ctx.fillStyle='#2e4773'; ctx.fill();
@@ -562,6 +542,7 @@ function drawTitanBird(w, h) {
 
 function drawLumberCamp(w, h) {
     const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,w,h);
     ctx.fillStyle='#8a6a5a'; ctx.beginPath(); ctx.roundRect(0,0,w,h,5); ctx.fill();
     const pad=w*.08; ctx.fillStyle='#6a4a3a'; ctx.fillRect(pad,pad,w-pad*2,h-pad*2);
     
@@ -598,6 +579,7 @@ function drawLumberCamp(w, h) {
 
 function drawSnowCedar(w, h) {
     const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,w,h);
     ctx.fillStyle='#edf5f8'; ctx.roundRect(0,0,w,h,5); ctx.fill();
     ctx.strokeStyle='#bde0fe'; ctx.lineWidth=2; ctx.strokeRect(1,1,w-2,h-2);
 
@@ -632,279 +614,243 @@ function drawSnowCedar(w, h) {
 
 function drawBBQStall(w, h) {
     const c = mk(w,h); const ctx = c.getContext('2d');
-    ctx.clearRect(0,0,w,h); 
-
-    ctx.fillStyle='#d2e2ec'; ctx.beginPath(); ctx.roundRect(0,0,w,h,5); ctx.fill();
-    ctx.strokeStyle='#a6c2d6'; ctx.lineWidth=2; ctx.strokeRect(1,1,w-2,h-2);
-
-    ctx.fillStyle='#3b3431'; ctx.beginPath(); ctx.arc(w*0.45, h*0.45, w*0.18, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='#e86c15'; ctx.beginPath(); ctx.arc(w*0.45, h*0.45, w*0.12, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='#fad02c'; ctx.beginPath(); ctx.arc(w*0.45, h*0.45, w*0.07, 0, Math.PI*2); ctx.fill();
-
-    ctx.fillStyle='#6c8c6c';
-    ctx.beginPath();
-    ctx.moveTo(w*0.1, h*0.1); ctx.lineTo(w*0.8, h*0.1); ctx.lineTo(w*0.8, h*0.3);  
-    ctx.lineTo(w*0.35, h*0.3); ctx.lineTo(w*0.35, h*0.6); ctx.lineTo(w*0.1, h*0.6);   
-    ctx.closePath(); ctx.fill();
-
-    ctx.fillStyle='#ffffff';
-    ctx.beginPath(); ctx.ellipse(w*0.25, h*0.18, w*0.1, h*0.05, 0, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(w*0.65, h*0.18, w*0.1, h*0.05, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='#3c3f41'; ctx.beginPath(); ctx.arc(w*0.45, h*0.18, w*0.08, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.arc(w*0.45, h*0.18, w*0.04, 0, Math.PI*2); ctx.fill();
-
-    ctx.fillStyle='#5c4333'; ctx.fillRect(w*0.15, h*0.35, w*0.15, h*0.2);
-
-    ctx.fillStyle='#7a5a44'; ctx.fillRect(w*0.6, h*0.35, w*0.25, h*0.2);
-    ctx.fillStyle='#d35400'; ctx.fillRect(w*0.63, h*0.38, w*0.19, h*0.14); 
-
-    const tbX = w*0.5, tbY = h*0.75;
-    const drawStool = (sx, sy) => {
-        ctx.fillStyle='#b4c2b8'; ctx.beginPath(); ctx.arc(sx, sy, w*0.05, 0, Math.PI*2); ctx.fill();
-        ctx.strokeStyle='#7a8685'; ctx.lineWidth=1; ctx.stroke();
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#3d2a1a';
+    ctx.beginPath(); ctx.roundRect(0,0,w,h,5); ctx.fill();
+    ctx.strokeStyle='rgba(50,30,15,0.6)'; ctx.lineWidth=0.8;
+    for(let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(w*i/5,0); ctx.lineTo(w*i/5,h); ctx.stroke(); }
+    for(let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(0,h*i/5); ctx.lineTo(w,h*i/5); ctx.stroke(); }
+    ctx.fillStyle='#81422d';
+    ctx.beginPath(); ctx.roundRect(w*0.04,h*0.04,w*0.92,h*0.60,5); ctx.fill();
+    ctx.fillStyle='#643328';
+    ctx.beginPath(); ctx.roundRect(w*0.08,h*0.16,w*0.84,h*0.44,3); ctx.fill();
+    ctx.strokeStyle='rgba(80,30,15,0.4)'; ctx.lineWidth=1;
+    for(let i=1;i<5;i++){
+        ctx.beginPath(); ctx.moveTo(w*0.08,h*(0.16+i*0.44/5)); ctx.lineTo(w*0.92,h*(0.16+i*0.44/5)); ctx.stroke();
     }
-    drawStool(tbX-w*0.22, tbY);
-    drawStool(tbX+w*0.22, tbY);
-    drawStool(tbX, tbY+h*0.16);
-
-    ctx.fillStyle='#856752'; ctx.beginPath(); ctx.arc(tbX, tbY, w*0.14, 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle='#4a3629'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(tbX-w*0.08, tbY-h*0.03); ctx.lineTo(tbX+w*0.08, tbY-h*0.03); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(tbX-w*0.08, tbY+h*0.03); ctx.lineTo(tbX+w*0.08, tbY+h*0.03); ctx.stroke();
-
+    ctx.fillStyle='#4a2010';
+    ctx.beginPath(); ctx.roundRect(w*0.02,h*0.04,w*0.96,h*0.12,3); ctx.fill();
+    ctx.fillStyle='#643328';
+    ctx.beginPath(); ctx.roundRect(w*0.04,h*0.05,w*0.92,h*0.07,2); ctx.fill();
+    ctx.strokeStyle='#3a1a08'; ctx.lineWidth=0.8;
+    for(let i=0;i<8;i++){
+        ctx.beginPath(); ctx.moveTo(w*i/8,h*0.04); ctx.lineTo(w*i/8,h*0.16); ctx.stroke();
+    }
+    const lanterns = [[0.18,0.22],[0.50,0.18],[0.82,0.22],[0.34,0.30],[0.66,0.30]];
+    lanterns.forEach(([lx,ly])=>{
+        ctx.strokeStyle='#4a2010'; ctx.lineWidth=0.8;
+        ctx.beginPath(); ctx.moveTo(w*lx,h*(ly-0.08)); ctx.lineTo(w*lx,h*(ly+0.06)); ctx.stroke();
+        ctx.fillStyle='#b65e30';
+        ctx.beginPath(); ctx.ellipse(w*lx,h*ly,w*0.05,h*0.07,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='rgba(255,200,80,0.7)';
+        ctx.beginPath(); ctx.ellipse(w*lx,h*ly,w*0.028,h*0.04,0,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle='#6a2808'; ctx.lineWidth=0.5;
+        for(let s=-1;s<=1;s++){
+            ctx.beginPath(); ctx.moveTo(w*lx+s*w*0.02,h*(ly-0.06)); ctx.lineTo(w*lx+s*w*0.02,h*(ly+0.06)); ctx.stroke();
+        }
+    });
+    ctx.strokeStyle='rgba(74,32,16,0.7)'; ctx.lineWidth=1;
+    [[0.15,0.18,0.85,0.18],[0.15,0.28,0.85,0.28]].forEach(([x1,y1,x2,y2])=>{
+        ctx.beginPath(); ctx.moveTo(w*x1,h*y1); ctx.lineTo(w*x2,h*y2); ctx.stroke();
+    });
+    const brX=w*0.72, brY=h*0.24, brR=w*0.10;
+    ctx.fillStyle='#4a2010'; ctx.beginPath(); ctx.ellipse(brX,brY+brR*0.3,brR*0.8,brR*0.25,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#81422d'; ctx.beginPath(); ctx.ellipse(brX,brY,brR,brR*0.38,0,0,Math.PI*2); ctx.fill();
+    [0.80,0.58].forEach(rr=>{ctx.strokeStyle='#b65e30';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(brX,brY,brR*rr,brR*rr*0.38,0,0,Math.PI*2);ctx.stroke();});
+    ctx.fillStyle='#4a2010'; ctx.beginPath(); ctx.arc(brX,brY,brR*0.12,0,Math.PI*2); ctx.fill();
+    const tX=w*0.04, tY=h*0.62, tW=w*0.92, tH=h*0.30;
+    ctx.fillStyle='#4a2010';
+    ctx.beginPath(); ctx.roundRect(tX,tY,tW,tH,4); ctx.fill();
+    ctx.fillStyle='#81422d';
+    ctx.beginPath(); ctx.roundRect(tX,tY,tW,tH*0.28,4); ctx.fill();
+    ctx.strokeStyle='#b04c2d'; ctx.lineWidth=0.8;
+    ctx.beginPath(); ctx.moveTo(tX+4,tY+tH*0.28); ctx.lineTo(tX+tW-4,tY+tH*0.28); ctx.stroke();
+    [[0.22,0.14],[0.50,0.14],[0.76,0.14]].forEach(([fx,fy])=>{
+        ctx.fillStyle='#925654'; ctx.beginPath(); ctx.ellipse(tX+tW*fx,tY+tH*fy,tW*0.055,tH*0.08,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#b04c2d'; ctx.beginPath(); ctx.ellipse(tX+tW*fx,tY+tH*fy,tW*0.040,tH*0.055,0,0,Math.PI*2); ctx.fill();
+    });
+    ctx.strokeStyle='rgba(74,32,16,0.4)'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(tX+tW*0.33,tY+tH*0.32); ctx.lineTo(tX+tW*0.33,tY+tH*0.98); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(tX+tW*0.66,tY+tH*0.32); ctx.lineTo(tX+tW*0.66,tY+tH*0.98); ctx.stroke();
+    ctx.strokeStyle='#3a1a08'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.roundRect(1,1,w-2,h-2,5); ctx.stroke();
     return c;
 }
 
+function drawGateway(w, h) {
+    const c = mk(w,h); const ctx = c.getContext('2d');
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#d5e2f3';
+    ctx.beginPath(); ctx.roundRect(0,0,w,h,4); ctx.fill();
+    ctx.strokeStyle='rgba(150,170,210,0.25)'; ctx.lineWidth=0.5;
+    for(let i=0;i<8;i++){ ctx.beginPath(); ctx.moveTo(w*i/8,0); ctx.lineTo(w*i/8,h); ctx.stroke(); }
+    for(let i=0;i<6;i++){ ctx.beginPath(); ctx.moveTo(0,h*i/6); ctx.lineTo(w,h*i/6); ctx.stroke(); }
+    const footColor='rgba(130,150,200,0.45)';
+    [[-0.08,0.12],[-0.05,0.30],[-0.08,0.50],[-0.05,0.68],[0.08,0.12],[0.05,0.30],[0.08,0.50],[0.05,0.68]].forEach(([ox,oy])=>{
+        ctx.fillStyle=footColor;
+        ctx.beginPath(); ctx.ellipse(w*0.50+w*ox,h*oy,w*0.022,h*0.040,ox<0?-0.3:0.3,0,Math.PI*2); ctx.fill();
+    });
+    const draw_tower = (tx, ty, tw, th) => {
+        ctx.fillStyle='#1b1e2d';
+        ctx.beginPath(); ctx.roundRect(tx,ty,tw,th,3); ctx.fill();
+        ctx.fillStyle='#9db6dc';
+        ctx.beginPath(); ctx.roundRect(tx+tw*0.08,ty+th*0.06,tw*0.84,th*0.88,3); ctx.fill();
+        ctx.strokeStyle='#6a85b0'; ctx.lineWidth=0.8;
+        for(let i=1;i<5;i++){
+            ctx.beginPath(); ctx.moveTo(tx+tw*0.10,ty+th*i/5); ctx.lineTo(tx+tw*0.90,ty+th*i/5); ctx.stroke();
+        }
+        ctx.fillStyle='#1b1e2d';
+        ctx.beginPath(); ctx.roundRect(tx+tw*0.18,ty-th*0.04,tw*0.64,th*0.12,2); ctx.fill();
+        ctx.fillStyle='#d5e2f3';
+        ctx.beginPath(); ctx.roundRect(tx+tw*0.22,ty-th*0.03,tw*0.56,th*0.08,2); ctx.fill();
+        [[tx+tw*0.26,ty+th*0.20],[tx+tw*0.74,ty+th*0.20]].forEach(([lx,ly])=>{
+            ctx.fillStyle='#e07820'; ctx.beginPath(); ctx.arc(lx,ly,tw*0.06,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle='rgba(255,180,60,0.6)'; ctx.beginPath(); ctx.arc(lx,ly,tw*0.03,0,Math.PI*2); ctx.fill();
+        });
+        ctx.strokeStyle='#6a85b0'; ctx.lineWidth=0.8;
+        ctx.beginPath(); ctx.moveTo(tx+tw*0.50,ty+th*0.10); ctx.lineTo(tx+tw*0.50,ty+th*0.90); ctx.stroke();
+    };
+    const tw=w*0.16, th=h*0.46;
+    draw_tower(w*0.04, h*0.20, tw, th);
+    draw_tower(w*0.80, h*0.20, tw, th);
+    ctx.fillStyle='#1b1e2d';
+    ctx.beginPath(); ctx.roundRect(w*0.20,h*0.18,w*0.60,h*0.12,3); ctx.fill();
+    ctx.fillStyle='#9db6dc';
+    ctx.beginPath(); ctx.roundRect(w*0.22,h*0.19,w*0.56,h*0.10,2); ctx.fill();
+    ctx.fillStyle='rgba(255,255,255,0.90)';
+    ctx.beginPath(); ctx.roundRect(w*0.34,h*0.20,w*0.32,h*0.08,2); ctx.fill();
+    ctx.strokeStyle='#4a90d0'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(w*0.34,h*0.20,w*0.32,h*0.08,2); ctx.stroke();
+    [0.32,0.47,0.62].forEach(fx=>{
+        ctx.fillStyle='#1b1e2d';
+        ctx.beginPath(); ctx.roundRect(w*fx,h*0.12,w*0.08,h*0.08,1); ctx.fill();
+        ctx.fillStyle='#9db6dc';
+        ctx.beginPath(); ctx.roundRect(w*fx+2,h*0.13,w*0.06,h*0.05,1); ctx.fill();
+    });
+    [[w*0.00,h*0.66],[w*0.00,h*0.40],[w*0.92,h*0.66],[w*0.92,h*0.40]].forEach(([tx,ty],i)=>{
+        const sr = i%2===0 ? w*0.045 : w*0.035;
+        ctx.fillStyle='#2e4a2e';
+        ctx.beginPath();
+        ctx.moveTo(tx+sr,ty);
+        ctx.lineTo(tx+sr*2,ty+sr*2.5);
+        ctx.lineTo(tx,ty+sr*2.5);
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle='rgba(213,226,243,0.8)';
+        ctx.beginPath();
+        ctx.moveTo(tx+sr,ty+2);
+        ctx.lineTo(tx+sr*1.4,ty+sr*0.9);
+        ctx.lineTo(tx+sr*0.6,ty+sr*0.9);
+        ctx.closePath(); ctx.fill();
+    });
+    ctx.strokeStyle='#9db6dc'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(1,1,w-2,h-2,4); ctx.stroke();
+    return c;
+}
 
-// ── 音箱 ──────────────────────────────────────────────────────────────────
 function drawSpeaker(w, h) {
     const c = mk(w,h); const ctx = c.getContext('2d');
     ctx.clearRect(0,0,w,h);
     const cx=w/2, cy=h/2, r=Math.min(w,h)*0.48;
-
-    // 箱体 (深色木纹方形)
-    ctx.fillStyle='#1e1e22';
-    ctx.beginPath(); ctx.roundRect(cx-r,cy-r,r*2,r*2,r*0.12); ctx.fill();
-    ctx.fillStyle='#2e2e36';
-    ctx.beginPath(); ctx.roundRect(cx-r*0.88,cy-r*0.88,r*1.76,r*1.76,r*0.10); ctx.fill();
-
-    // 木纹侧边条
-    ctx.fillStyle='#3a2a1a';
-    ctx.fillRect(cx-r*0.90,cy-r*0.90, r*0.10, r*1.80);
-    ctx.fillRect(cx+r*0.80,cy-r*0.90, r*0.10, r*1.80);
-
-    // 主扬声器振膜 (大圆 → 网格布)
-    ctx.fillStyle='#111116';
-    ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*0.52,0,Math.PI*2); ctx.fill();
-    // 同心波纹
+    ctx.fillStyle='#1e1e22'; ctx.beginPath(); ctx.roundRect(cx-r,cy-r,r*2,r*2,r*0.12); ctx.fill();
+    ctx.fillStyle='#2e2e36'; ctx.beginPath(); ctx.roundRect(cx-r*0.88,cy-r*0.88,r*1.76,r*1.76,r*0.10); ctx.fill();
+    ctx.fillStyle='#3a2a1a'; ctx.fillRect(cx-r*0.90,cy-r*0.90, r*0.10, r*1.80); ctx.fillRect(cx+r*0.80,cy-r*0.90, r*0.10, r*1.80);
+    ctx.fillStyle='#111116'; ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*0.52,0,Math.PI*2); ctx.fill();
     [0.52,0.40,0.28].forEach(rr=>{
         ctx.strokeStyle = rr===0.52 ? '#444' : '#333';
         ctx.lineWidth = rr===0.52 ? 1.5 : 0.8;
         ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*rr,0,Math.PI*2); ctx.stroke();
     });
-    // 中央防尘帽
-    ctx.fillStyle='#2a5080';
-    ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*0.14,0,Math.PI*2); ctx.fill();
-    ctx.fillStyle='#4080c0';
-    ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*0.07,0,Math.PI*2); ctx.fill();
-
-    // 下方小高音头
-    ctx.fillStyle='#111116';
-    ctx.beginPath(); ctx.arc(cx,cy+r*0.60,r*0.18,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#2a5080'; ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*0.14,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#4080c0'; ctx.beginPath(); ctx.arc(cx,cy-r*0.10,r*0.07,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#111116'; ctx.beginPath(); ctx.arc(cx,cy+r*0.60,r*0.18,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='#333'; ctx.lineWidth=0.8;
     [0.18,0.12,0.06].forEach(rr=>{
         ctx.beginPath(); ctx.arc(cx,cy+r*0.60,r*rr,0,Math.PI*2); ctx.stroke();
     });
-    ctx.fillStyle='#505050';
-    ctx.beginPath(); ctx.arc(cx,cy+r*0.60,r*0.04,0,Math.PI*2); ctx.fill();
-
-    // 品牌角标 (左下小LED灯)
-    ctx.fillStyle='#00d4ff';
-    ctx.beginPath(); ctx.arc(cx-r*0.65,cy+r*0.72,r*0.04,0,Math.PI*2); ctx.fill();
-
-    // 箱体外框高光
-    ctx.strokeStyle='#4a4a56'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(cx-r,cy-r,r*2,r*2,r*0.12); ctx.stroke();
+    ctx.fillStyle='#505050'; ctx.beginPath(); ctx.arc(cx,cy+r*0.60,r*0.04,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#00d4ff'; ctx.beginPath(); ctx.arc(cx-r*0.65,cy+r*0.72,r*0.04,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#4a4a56'; ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(cx-r,cy-r,r*2,r*2,r*0.12); ctx.stroke();
     return c;
 }
 
-// ── 升级提示牌 ───────────────────────────────────────────────────────────────
+// ── 更新的：升级提示牌（居中+白色海报） ──
 function drawSignboard(w, h) {
     const c = mk(w,h); const ctx = c.getContext('2d');
     ctx.clearRect(0,0,w,h);
-
-    // 木板底座 (菱形旋转, 参考游戏截图)
+    
     ctx.save();
-    ctx.translate(w*0.38, h*0.52);
-    ctx.rotate(-0.42); // 倾斜感
-
+    // 整体居中平移，并设置一个较小的倾斜角度
+    ctx.translate(w*0.5, h*0.5); 
+    ctx.rotate(-0.2); 
+    
     // 木板主体
-    ctx.fillStyle='#5c3a1e';
-    ctx.beginPath(); ctx.roundRect(-w*0.28,-h*0.30,w*0.56,h*0.60,4); ctx.fill();
-    // 木纹高光
-    ctx.fillStyle='#6e4828';
-    ctx.beginPath(); ctx.roundRect(-w*0.26,-h*0.28,w*0.52,h*0.56,3); ctx.fill();
-    // 木板横纹
+    ctx.fillStyle='#5c3a1e'; ctx.beginPath(); ctx.roundRect(-w*0.35,-h*0.35,w*0.7,h*0.7,4); ctx.fill();
+    ctx.fillStyle='#6e4828'; ctx.beginPath(); ctx.roundRect(-w*0.33,-h*0.33,w*0.66,h*0.66,3); ctx.fill();
     ctx.strokeStyle='rgba(80,40,10,0.5)'; ctx.lineWidth=1;
-    [-0.10,0,0.10].forEach(dy=>{
-        ctx.beginPath(); ctx.moveTo(-w*0.24,h*dy); ctx.lineTo(w*0.24,h*dy); ctx.stroke();
+    [-0.15, 0, 0.15].forEach(dy=>{
+        ctx.beginPath(); ctx.moveTo(-w*0.3,h*dy); ctx.lineTo(w*0.3,h*dy); ctx.stroke();
     });
-    // 木板钉子 (四角)
-    [[-0.22,-0.24],[0.22,-0.24],[-0.22,0.24],[0.22,0.24]].forEach(([nx,ny])=>{
-        ctx.fillStyle='#c8a060';
-        ctx.beginPath(); ctx.arc(w*nx,h*ny,2.5,0,Math.PI*2); ctx.fill();
+    
+    // 木板四角钉子
+    [[-0.28,-0.28],[0.28,-0.28],[-0.28,0.28],[0.28,0.28]].forEach(([nx,ny])=>{
+        ctx.fillStyle='#c8a060'; ctx.beginPath(); ctx.arc(w*nx,h*ny,2.5,0,Math.PI*2); ctx.fill();
     });
-
-    // 数字 "1" (白色粗体)
-    ctx.fillStyle='#ffffff';
-    ctx.font = `bold ${h*0.36}px 'Segoe UI', sans-serif`;
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('1', 0, h*0.02);
-
-    ctx.restore();
-
-    // 绿色向上箭头 (参考图右侧大绿箭, 俯视稍倾斜)
-    ctx.save();
-    ctx.translate(w*0.74, h*0.44);
-    ctx.rotate(-0.30);
-
-    // 箭头主体 (填充绿色)
-    ctx.fillStyle='#3dcc2a';
-    ctx.beginPath();
-    // 箭头头部 (三角)
-    ctx.moveTo(0, -h*0.32);
-    ctx.lineTo(w*0.20, -h*0.02);
-    ctx.lineTo(w*0.09, -h*0.02);
-    ctx.lineTo(w*0.09, h*0.28);
-    ctx.lineTo(-w*0.09, h*0.28);
-    ctx.lineTo(-w*0.09, -h*0.02);
-    ctx.lineTo(-w*0.20, -h*0.02);
-    ctx.closePath();
-    ctx.fill();
-    // 箭头轮廓
-    ctx.strokeStyle='#28a018'; ctx.lineWidth=1;
-    ctx.stroke();
-    // 高光
-    ctx.fillStyle='rgba(255,255,255,0.25)';
-    ctx.beginPath();
-    ctx.moveTo(0,-h*0.30);
-    ctx.lineTo(w*0.10,-h*0.04);
-    ctx.lineTo(w*0.05,-h*0.04);
-    ctx.lineTo(w*0.05,h*0.00);
-    ctx.lineTo(-w*0.04,h*0.00);
-    ctx.lineTo(-w*0.04,-h*0.04);
-    ctx.lineTo(-w*0.10,-h*0.04);
-    ctx.closePath(); ctx.fill();
-
+    
+    // 中间的白色方块（代表海报）
+    ctx.fillStyle='#f8f9fa';
+    ctx.beginPath(); ctx.roundRect(-w*0.22, -h*0.22, w*0.44, h*0.44, 2); ctx.fill();
+    
+    // 海报上的细节纹理（横线排版模拟图文）
+    ctx.fillStyle='#ced4da';
+    ctx.fillRect(-w*0.15, -h*0.1, w*0.3, h*0.04);
+    ctx.fillRect(-w*0.15, -h*0.02, w*0.2, h*0.04);
+    ctx.fillRect(-w*0.15, h*0.06, w*0.25, h*0.04);
+    
     ctx.restore();
     return c;
 }
 
-// ── LED 大屏幕 ────────────────────────────────────────────────────────────────
 function drawLEDScreen(w, h) {
     const c = mk(w,h); const ctx = c.getContext('2d');
     ctx.clearRect(0,0,w,h);
-
-    // 参考手绘: 极细长矩形屏幕面 + 两端 X 形支架腿 (俯视投影)
-
-    const screenH = h * 0.34;        // 屏幕面厚度 (俯视看窄边)
-    const screenY = (h - screenH)/2; // 垂直居中
-    const legSpan = h * 0.32;        // 支架腿展开宽度
-
-    // ── 两端支架腿阴影 (投影到地面) ──
+    const screenH = h * 0.34; const screenY = (h - screenH)/2; const legSpan = h * 0.32;        
     ctx.fillStyle='rgba(0,0,0,0.12)';
-    // 左支架阴影
-    ctx.beginPath();
-    ctx.moveTo(w*0.02+4, screenY-legSpan+4);
-    ctx.lineTo(w*0.10+4, screenY+screenH/2+4);
-    ctx.lineTo(w*0.02+4, screenY+screenH+legSpan+4);
-    ctx.lineTo(w*0+4,    screenY+screenH+legSpan+4);
-    ctx.lineTo(w*0+4,    screenY-legSpan+4);
-    ctx.closePath(); ctx.fill();
-    // 右支架阴影
-    ctx.beginPath();
-    ctx.moveTo(w*0.98+4, screenY-legSpan+4);
-    ctx.lineTo(w*0.90+4, screenY+screenH/2+4);
-    ctx.lineTo(w*0.98+4, screenY+screenH+legSpan+4);
-    ctx.lineTo(w*1.00+4, screenY+screenH+legSpan+4);
-    ctx.lineTo(w*1.00+4, screenY-legSpan+4);
-    ctx.closePath(); ctx.fill();
-
-    // ── 左侧 X 形支架 ──
-    const legCol = '#2a2e3a';
-    const legHighlight = '#4a5060';
+    ctx.beginPath(); ctx.moveTo(w*0.02+4, screenY-legSpan+4); ctx.lineTo(w*0.10+4, screenY+screenH/2+4); ctx.lineTo(w*0.02+4, screenY+screenH+legSpan+4); ctx.lineTo(w*0+4, screenY+screenH+legSpan+4); ctx.lineTo(w*0+4, screenY-legSpan+4); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(w*0.98+4, screenY-legSpan+4); ctx.lineTo(w*0.90+4, screenY+screenH/2+4); ctx.lineTo(w*0.98+4, screenY+screenH+legSpan+4); ctx.lineTo(w*1.00+4, screenY+screenH+legSpan+4); ctx.lineTo(w*1.00+4, screenY-legSpan+4); ctx.closePath(); ctx.fill();
+    const legCol = '#2a2e3a'; const legHighlight = '#4a5060';
     ctx.strokeStyle=legCol; ctx.lineWidth=3; ctx.lineCap='round';
-    // 左支架: 两根腿从屏幕左端延伸, X 形展开
-    ctx.beginPath(); ctx.moveTo(w*0.09, screenY+screenH/2);
-    ctx.lineTo(w*0.01, screenY - legSpan); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(w*0.09, screenY+screenH/2);
-    ctx.lineTo(w*0.01, screenY+screenH+legSpan); ctx.stroke();
-    // 腿高光
+    ctx.beginPath(); ctx.moveTo(w*0.09, screenY+screenH/2); ctx.lineTo(w*0.01, screenY - legSpan); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.09, screenY+screenH/2); ctx.lineTo(w*0.01, screenY+screenH+legSpan); ctx.stroke();
     ctx.strokeStyle=legHighlight; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(w*0.085, screenY+screenH/2);
-    ctx.lineTo(w*0.015,screenY-legSpan+2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(w*0.085,screenY+screenH/2);
-    ctx.lineTo(w*0.015,screenY+screenH+legSpan-2); ctx.stroke();
-    // 左支架脚端横档
+    ctx.beginPath(); ctx.moveTo(w*0.085, screenY+screenH/2); ctx.lineTo(w*0.015,screenY-legSpan+2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.085,screenY+screenH/2); ctx.lineTo(w*0.015,screenY+screenH+legSpan-2); ctx.stroke();
     ctx.strokeStyle=legCol; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(w*0.00,screenY-legSpan);
-    ctx.lineTo(w*0.04,screenY-legSpan); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(w*0.00,screenY+screenH+legSpan);
-    ctx.lineTo(w*0.04,screenY+screenH+legSpan); ctx.stroke();
-
-    // ── 右侧 X 形支架 ──
+    ctx.beginPath(); ctx.moveTo(w*0.00,screenY-legSpan); ctx.lineTo(w*0.04,screenY-legSpan); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.00,screenY+screenH+legSpan); ctx.lineTo(w*0.04,screenY+screenH+legSpan); ctx.stroke();
     ctx.strokeStyle=legCol; ctx.lineWidth=3;
-    ctx.beginPath(); ctx.moveTo(w*0.91, screenY+screenH/2);
-    ctx.lineTo(w*0.99, screenY-legSpan); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(w*0.91, screenY+screenH/2);
-    ctx.lineTo(w*0.99, screenY+screenH+legSpan); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.91, screenY+screenH/2); ctx.lineTo(w*0.99, screenY-legSpan); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.91, screenY+screenH/2); ctx.lineTo(w*0.99, screenY+screenH+legSpan); ctx.stroke();
     ctx.strokeStyle=legHighlight; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(w*0.915,screenY+screenH/2);
-    ctx.lineTo(w*0.985,screenY-legSpan+2); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(w*0.915,screenY+screenH/2);
-    ctx.lineTo(w*0.985,screenY+screenH+legSpan-2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.915,screenY+screenH/2); ctx.lineTo(w*0.985,screenY-legSpan+2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.915,screenY+screenH/2); ctx.lineTo(w*0.985,screenY+screenH+legSpan-2); ctx.stroke();
     ctx.strokeStyle=legCol; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.moveTo(w*0.96,screenY-legSpan);
-    ctx.lineTo(w*1.00,screenY-legSpan); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(w*0.96,screenY+screenH+legSpan);
-    ctx.lineTo(w*1.00,screenY+screenH+legSpan); ctx.stroke();
-
-    // ── 屏幕主体 (细长矩形) ──
-    // 背板 (深色铁框)
-    ctx.fillStyle='#1a1c24';
-    ctx.beginPath(); ctx.roundRect(w*0.08, screenY, w*0.84, screenH, 3); ctx.fill();
-
-    // 屏幕显示面 (冷蓝深色, 模拟LED俯视)
-    ctx.fillStyle='#0d1a2e';
-    ctx.beginPath(); ctx.roundRect(w*0.09, screenY+screenH*0.10, w*0.82, screenH*0.80, 2); ctx.fill();
-
-    // LED像素点阵 (等间距小点, 模拟LED屏质感)
-    const cols=22, rows=3;
-    const dotW = w*0.82/cols, dotH = screenH*0.80/rows;
+    ctx.beginPath(); ctx.moveTo(w*0.96,screenY-legSpan); ctx.lineTo(w*1.00,screenY-legSpan); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(w*0.96,screenY+screenH+legSpan); ctx.lineTo(w*1.00,screenY+screenH+legSpan); ctx.stroke();
+    ctx.fillStyle='#1a1c24'; ctx.beginPath(); ctx.roundRect(w*0.08, screenY, w*0.84, screenH, 3); ctx.fill();
+    ctx.fillStyle='#0d1a2e'; ctx.beginPath(); ctx.roundRect(w*0.09, screenY+screenH*0.10, w*0.82, screenH*0.80, 2); ctx.fill();
+    const cols=22, rows=3; const dotW = w*0.82/cols, dotH = screenH*0.80/rows;
     for(let row=0; row<rows; row++){
         for(let col=0; col<cols; col++){
-            const dx = w*0.09 + (col+0.5)*dotW;
-            const dy = screenY+screenH*0.10 + (row+0.5)*dotH;
-            // 每个像素点颜色随机模拟画面
+            const dx = w*0.09 + (col+0.5)*dotW; const dy = screenY+screenH*0.10 + (row+0.5)*dotH;
             const hues = ['#1a4080','#2060b0','#10305a','#0d5090','#1850a0'];
-            ctx.fillStyle = hues[(row*7+col*3)%hues.length];
-            ctx.beginPath(); ctx.arc(dx,dy,dotW*0.28,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle = hues[(row*7+col*3)%hues.length]; ctx.beginPath(); ctx.arc(dx,dy,dotW*0.28,0,Math.PI*2); ctx.fill();
         }
     }
-    // 模拟屏幕高亮区 (局部亮斑)
-    ctx.fillStyle='rgba(60,120,200,0.18)';
-    ctx.beginPath(); ctx.roundRect(w*0.25,screenY+screenH*0.12,w*0.20,screenH*0.76,2); ctx.fill();
-
-    // 铁框边缘线
-    ctx.strokeStyle='#3a4050'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(w*0.08,screenY,w*0.84,screenH,3); ctx.stroke();
-
-    // 屏幕两端连接块
+    ctx.fillStyle='rgba(60,120,200,0.18)'; ctx.beginPath(); ctx.roundRect(w*0.25,screenY+screenH*0.12,w*0.20,screenH*0.76,2); ctx.fill();
+    ctx.strokeStyle='#3a4050'; ctx.lineWidth=1; ctx.beginPath(); ctx.roundRect(w*0.08,screenY,w*0.84,screenH,3); ctx.stroke();
     [[w*0.08,screenY],[w*0.84+w*0.08,screenY]].forEach(([bx,by])=>{
-        ctx.fillStyle='#2a3040';
-        ctx.beginPath(); ctx.roundRect(bx-3,by-1,8,screenH+2,2); ctx.fill();
+        ctx.fillStyle='#2a3040'; ctx.beginPath(); ctx.roundRect(bx-3,by-1,8,screenH+2,2); ctx.fill();
     });
-
     return c;
 }
 
@@ -931,8 +877,9 @@ const defaultItems = [
     { name: "采矿场", shape: "Rectangle", area: 12, color: "#c2c5cc", isCustom: false, renderFn:(w,h)=>drawMine(w,h) },
     { name: "猎人之家", shape: "Rectangle", area: 12, color: "#6b4e3d", isCustom: false, renderFn:(w,h)=>drawHunterHut(w,h) },
     { name: "试玩指挥部", shape: "Rectangle", area: 12, color: "#5c738b", isCustom: false, renderFn:(w,h)=>drawHQ(w,h) },
+    { name: "营地厨房", shape: "Square", area: 12, color: "#776f60", isCustom: false, renderFn:(w,h)=>drawKitchen(w,h) },
     { name: "木材营地", shape: "Square", area: 8, color: "#846658", isCustom: false, renderFn:(w,h)=>drawLumberCamp(w,h) },
-    { name: "烤肉摊位", shape: "Square", area: 15, color: "#e86c15", isCustom: false, renderFn:(w,h)=>drawBBQStall(w,h) },
+    { name: "酒馆（VIP区）", shape: "Square", area: 15, color: "#81422d", isCustom: false, renderFn:(w,h)=>drawBBQStall(w,h) },
     { name: "雪松树林", shape: "Rectangle", area: 5, color: "#9cb1c2", isCustom: false, renderFn:(w,h)=>drawSnowCedar(w,h) },
     { name: "大白熊雕像", shape: "Square", area: 5, color: "#cbd5e1", isCustom: false, renderFn:(w,h)=>drawPolarBear(w,h) },
     { name: "泰坦巨鸟", shape: "Square", area: 5, color: "#495057", isCustom: false, renderFn:(w,h)=>drawTitanBird(w,h) },
@@ -940,8 +887,9 @@ const defaultItems = [
     { name: "幸存者登记台", shape: "Square", area: 2, color: "#8b5a2b", isCustom: false, renderFn:(w,h)=>drawDesk(w,h) },
     { name: "领主登记台", shape: "Square", area: 2, color: "#8b5a2b", isCustom: false, renderFn:(w,h)=>drawDesk(w,h) },
     { name: "音箱", shape: "Square", area: 1, color: "#1e1e22", isCustom: false, renderFn:(w,h)=>drawSpeaker(w,h) },
-    { name: "升级提示牌", shape: "Rectangle", area: 1, color: "#5c3a1e", isCustom: false, renderFn:(w,h)=>drawSignboard(w,h) },
-    { name: "LED大屏幕", shape: "Rectangle", area: 5, color: "#1a1c24", isCustom: false, renderFn:(w,h)=>drawLEDScreen(w,h) }
+    { name: "提示牌", shape: "Rectangle", area: 1, color: "#5c3a1e", isCustom: false, renderFn:(w,h)=>drawSignboard(w,h) },
+    { name: "LED大屏幕", shape: "Rectangle", area: 5, color: "#1a1c24", isCustom: false, renderFn:(w,h)=>drawLEDScreen(w,h) },
+    { name: "门头造景", shape: "Rectangle", area: 10, color: "#9db6dc", isCustom: false, renderFn:(w,h)=>drawGateway(w,h) }
 ];
 
 function initWarehouse() {
@@ -1002,6 +950,7 @@ function createWarehouseEl(data) {
             if(!isNaN(val) && val > 0) {
                 data.area = val;
                 div.querySelector('.item-meta span').innerText = val;
+                updateOccupancy(); // 实时更新沙盘面积
             } else {
                 alert("请输入大于0的有效数字！");
             }
@@ -1154,11 +1103,11 @@ function calcDims(shape, area) {
 }
 
 function updateOccupancy() {
-    let usedArea = 0;
+    let usedArea = STAGE_AREA; // 核心更新：初始化赋值为主舞台的面积
     canvasItems.forEach(item => { usedArea += parseFloat(item.data.area); });
     const percentage = ((usedArea / TOTAL_AREA) * 100).toFixed(1);
     const display = document.getElementById('occupancy-display');
-    display.innerText = `场地占用: ${usedArea}㎡ / ${TOTAL_AREA}㎡ (${percentage}%)`;
+    display.innerText = `场地占用: ${usedArea.toFixed(1)}㎡ / ${TOTAL_AREA}㎡ (${percentage}%)`;
     if (percentage > 70) { display.style.color = "#d90429"; display.style.background = "#fff0f3"; } 
     else if (percentage > 50) { display.style.color = "#fb8500"; display.style.background = "#fff8ec"; } 
     else { display.style.color = "#00b4d8"; display.style.background = "#e0fbfc"; }
